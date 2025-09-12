@@ -1,7 +1,6 @@
 # %%
 import streamlit as st
 import pandas as pd
-from sqlalchemy import create_engine
 from streamlit_option_menu import option_menu
 
 # ==============================================================================
@@ -30,21 +29,6 @@ from data_loader import (
 # ==============================================================================
 st.set_page_config(layout="wide", page_title="Dashboard CEI ", page_icon="📊")
 carregar_css("style.css")
-
-
-# ==============================================================================
-# CONFIGURAÇÃO DA CONEXÃO COM O BANCO DE DADOS
-# ==============================================================================
-@st.cache_resource
-def get_engine():
-    usuario = "rnbirck"
-    senha = "ceiunisinos"
-    host = "localhost"
-    banco = "cei"
-    return create_engine(f"postgresql+psycopg2://{usuario}:{senha}@{host}/{banco}")
-
-
-engine = get_engine()
 
 # ==============================================================================
 # DEFINIÇÕES GERAIS
@@ -564,24 +548,24 @@ def show_page_comex(
 
 # Emprego
 df_caged = carregar_dados_emprego_municipios(
-    _engine=engine, municipios=municipios_de_interesse, anos=anos_de_interesse
+    municipios=municipios_de_interesse, anos=anos_de_interesse
 )
 df_caged_cnae = carregar_dados_emprego_cnae(
-    _engine=engine, municipio=municipio_de_interesse, anos=anos_de_interesse
+    municipio=municipio_de_interesse, anos=anos_de_interesse
 )
 
 # Comércio Exterior
 anos_comex = range(min(anos_de_interesse) - 1, max(anos_de_interesse) + 1)
 df_comex_ano = carregar_dados_comex_anual(
-    _engine=engine, municipios=municipios_de_interesse, anos=anos_comex
+    municipios=municipios_de_interesse, anos=anos_comex
 )
 
 df_comex_mensal = carregar_dados_comex_mensal(
-    _engine=engine, municipios=municipios_de_interesse, anos=anos_comex
+    municipios=municipios_de_interesse, anos=anos_comex
 )
 
 df_comex_municipio = carregar_dados_comex_municipio(
-    _engine=engine, municipio=municipio_de_interesse, anos=anos_comex
+    municipio=municipio_de_interesse, anos=anos_comex
 )
 # ==============================================================================
 # BARRA LATERAL E NAVEGAÇÃO ENTRE PÁGINAS
