@@ -1,0 +1,206 @@
+import plotly.express as px
+import streamlit as st
+import pandas as pd
+
+# --- DICIONÁRIOS E CONSTANTES ---
+
+# Dicionário para tradução de meses
+MESES_DIC = {
+    1: "Janeiro",
+    2: "Fevereiro",
+    3: "Março",
+    4: "Abril",
+    5: "Maio",
+    6: "Junho",
+    7: "Julho",
+    8: "Agosto",
+    9: "Setembro",
+    10: "Outubro",
+    11: "Novembro",
+    12: "Dezembro",
+}
+
+
+def manter_posicao_scroll():
+    """
+    Esta função injeta JavaScript para salvar a posição do scroll no sessionStorage
+    do navegador e restaurá-la após a re-execução do script pelo Streamlit.
+    """
+    # O JavaScript para salvar e restaurar a posição do scroll.
+    # A função debounce evita que o evento de scroll seja disparado muitas vezes,
+    # o que poderia causar problemas de performance.
+    js_code = """
+    <script>
+        const scrollKey = "streamlit-scroll-position";
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        const saveScrollPosition = debounce(() => {
+            sessionStorage.setItem(scrollKey, window.scrollY);
+        }, 100);
+
+        window.addEventListener("scroll", saveScrollPosition);
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const scrollY = sessionStorage.getItem(scrollKey);
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY, 10));
+            }
+        });
+    </script>
+    """
+    # Usa st.components.v1.html para injetar o script na página
+    st.components.v1.html(js_code, height=0)
+
+
+# -- FUNCOES DE VISUALIZACAO ---
+def carregar_css(caminho_arquivo):
+    """
+    Lê um arquivo CSS e o injeta na aplicação Streamlit.
+    """
+    with open(caminho_arquivo) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
+def checar_ult_ano_completo(df):
+    """
+    Verifica se o último ano no DataFrame está completo (ou seja, se contém dados até dezembro).
+    Se não estiver completo, retorna o ano anterior.
+
+    Args:
+        df (pd.DataFrame): DataFrame contendo uma coluna 'ano'.
+
+    Returns:
+        int: O último ano completo.
+    """
+    ult_ano = df["ano"].max()
+    meses_no_ult_ano = df[df["ano"] == ult_ano]["mes"].nunique()
+    if meses_no_ult_ano < 12:
+        return ult_ano - 1
+    return ult_ano
+
+
+def filtrar_municipio_ult_mes_ano(df, municipio):
+    """
+    Filtra o DataFrame para manter apenas os dados do último mês do último ano disponível.
+
+    Args:
+        df (pd.DataFrame): DataFrame contendo colunas 'ano' e 'mes'.
+
+    Returns:
+        pd.DataFrame: DataFrame filtrado com dados do último mês do último ano.
+    """
+    ult_ano = df["ano"].max()
+    ult_mes = df[df["ano"] == ult_ano]["mes"].max()
+    return df[
+        (df["municipio"] == municipio) & (df["ano"] == ult_ano) & (df["mes"] == ult_mes)
+    ]
+
+
+def criar_grafico_barras(
+    df,
+    titulo,
+    label_y,
+    barmode="group",
+    height=500,
+    data_label_format=",.2f",
+    hover_label_format=",.2f",
+):
+    """
+    Cria um gráfico de barras customizado e reutilizável com Plotly Express.
+    """
+
+    index_name = df.index.name if df.index.name is not None else "index"
+    df_reset = df.reset_index()
+
+    df_long = df_reset.melt(id_vars=index_name, var_name="series", value_name="value")
+
+    df_long["hover_value_formatted"] = df_long["value"].apply(
+        lambda x: f"{x:{hover_label_format}}".replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
+    )
+    df_long["data_label_formatted"] = df_long["value"].apply(
+        lambda x: f"{x:{data_label_format}}".replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
+    )
+
+    fig = px.bar(
+        df_long,
+        x=index_name,
+        y="value",
+        color="series",
+        labels={"value": label_y, index_name: "", "series": ""},
+        barmode=barmode,
+        height=height,
+        custom_data=["hover_value_formatted", "data_label_formatted"],
+    )
+
+    xaxis_config = {}
+    if pd.api.types.is_numeric_dtype(df.index):
+        xaxis_config = dict(tickmode="linear", dtick=1)
+
+    fig.update_layout(
+        margin=dict(t=120),
+        title_text=titulo,
+        title_font_size=20,
+        xaxis_title="",
+        xaxis=xaxis_config,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
+            title="",
+            font=dict(size=15),
+        ),
+    )
+
+    fig.update_traces(
+        texttemplate="%{customdata[1]}",
+        textposition="outside",
+        cliponaxis=False,
+        hovertemplate=(
+            "<b>%{fullData.name}</b><br>"
+            f"<b>{index_name.title()}</b>: %{{x}}<br>"
+            "<b>Valor</b>: %{customdata[0]}"
+            "<extra></extra>"
+        ),
+    )
+    return fig
+
+
+def criar_tabela_formatada(df, index_col, ult_ano, ult_mes):
+    """Cria uma tabela formatada para exibição no Streamlit."""
+    df_filtrado = df[df["mes"] <= ult_mes]
+    df_pivot = df_filtrado.pivot_table(
+        index=index_col,
+        columns="ano",
+        values="saldo_movimentacao",
+        aggfunc="sum",
+        fill_value=0,
+    ).sort_values(by=ult_ano, ascending=False)
+
+    df_pivot.columns = (
+        f"Jan-{MESES_DIC[ult_mes][:3]}"
+        + "/"
+        + df_pivot.columns.astype(str).str.slice(-2)
+    )
+    df_pivot.index.name = index_col.replace("_", " ").title()
+
+    return df_pivot
+
+
+def destacar_percentuais(val):
+    if pd.isna(val) or val == 0:
+        return ""
+    color = "green" if val > 0 else "red"
+    return f"color: {color}"

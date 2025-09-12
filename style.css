@@ -1,0 +1,22 @@
+/* Centraliza o conteúdo (label e valor) de cada métrica */
+[data-testid="stMetric"] > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Aumenta o tamanho do valor da métrica */
+[data-testid="stMetricValue"] {
+    font-size: 1.3rem;
+}
+
+/* Aumenta o tamanho do label da métrica */
+[data-testid="stMetricLabel"] p {
+    font-size: 1.1rem !important;
+}
+
+/* Aumenta o tamanho da fonte dos botões das abas */
+[data-testid="stTabs"] button p {
+    font-size: 1.15rem !important; /* Seletor mais específico para o texto da aba */
+}
+
