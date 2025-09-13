@@ -1,6 +1,7 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
-import os
+import json
+from gspread_pandas import Spread
 from datetime import datetime
 
 from queries import (
@@ -19,20 +20,25 @@ from app import (
 )
 
 
-def exportar_query_para_csv(engine, query, file_path, params=None):
-    """Executa uma query e salva o resultado em um arquivo CSV."""
+# <<< MUDANÇA CRÍTICA AQUI >>>
+# A função agora espera 'gspread_config', um dicionário
+def atualizar_google_sheet(gspread_config, engine, query, sheet_name, params=None):
+    """Executa uma query e envia o resultado para uma Google Sheet específica."""
+    print(f"Processando: '{sheet_name}'...")
     try:
         df = pd.read_sql_query(text(query), engine, params=params)
 
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        # <<< MUDANÇA CRÍTICA AQUI >>>
+        # Usamos o dicionário com o parâmetro 'config'
+        spread = Spread(sheet_name, config=gspread_config)
 
-        df.to_csv(file_path, index=False)
-        print(f"-> Arquivo '{file_path}' foi atualizado com sucesso.")
+        spread.df_to_sheet(df, index=False, headers=True, start="A1", replace=True)
+        print(f"-> Planilha '{sheet_name}' foi atualizada com sucesso.")
     except Exception as e:
-        print(f"ERRO ao exportar para '{file_path}': {e}")
+        print(f"ERRO ao atualizar a planilha '{sheet_name}': {e}")
 
 
-# --- CONFIGURAÇÃO DA CONEXÃO ---
+# --- CONFIGURAÇÃO DA CONEXÃO LOCAL ---
 usuario = "rnbirck"
 senha = "ceiunisinos"
 host = "localhost"
@@ -41,52 +47,72 @@ engine = create_engine(f"postgresql+psycopg2://{usuario}:{senha}@{host}/{banco}"
 
 print("Iniciando o script de atualização de dados...")
 
-# --- EXECUÇÃO DAS EXPORTAÇÕES ---
-exportar_query_para_csv(
+# --- CARREGA AS CREDENCIAIS DO GOOGLE DO ARQUIVO JSON ---
+try:
+    with open("credentials.json", "r") as f:
+        gspread_config = json.load(f)
+    print("Arquivo de credenciais 'credentials.json' carregado com sucesso.")
+except FileNotFoundError:
+    print("ERRO: Arquivo 'credentials.json' não encontrado.")
+    exit()
+except Exception as e:
+    print(f"Erro ao ler o arquivo de credenciais: {e}")
+    exit()
+
+print("\nIniciando o script de atualização de dados para o Google Sheets...")
+
+# --- EXECUÇÃO DAS ATUALIZAÇÕES ---
+# As chamadas continuam corretas, passando o dicionário 'gspread_config'
+atualizar_google_sheet(
+    gspread_config,
     engine,
     QUERY_EMPREGO_MUNICIPIOS,
-    "data/emprego/caged_municipios.csv",
+    "dados_emprego_municipios",
     params={
         "lista_municipios": tuple(municipios_de_interesse),
         "lista_anos": tuple(anos_de_interesse),
     },
 )
 
-exportar_query_para_csv(
+atualizar_google_sheet(
+    gspread_config,
     engine,
     QUERY_EMPREGO_CNAE,
-    "data/emprego/caged_cnae.csv",
+    "dados_emprego_cnae",
     params={
         "municipio": municipio_de_interesse,
         "lista_anos": tuple(anos_de_interesse),
     },
 )
 
-exportar_query_para_csv(
+atualizar_google_sheet(
+    gspread_config,
     engine,
     QUERY_EXP_ANUAL,
-    "data/comex/comex_anual.csv",
+    "dados_comex_anual",
     params={
         "lista_municipios": tuple(municipios_de_interesse),
         "lista_anos": tuple(anos_comex),
     },
 )
 
-exportar_query_para_csv(
+atualizar_google_sheet(
+    gspread_config,
     engine,
     QUERY_EXP_MENSAL,
-    "data/comex/comex_mensal.csv",
+    "dados_comex_mensal",
     params={
         "lista_municipios": tuple(municipios_de_interesse),
         "lista_anos": tuple(anos_comex),
     },
 )
 
-exportar_query_para_csv(
+atualizar_google_sheet(
+    gspread_config,
     engine,
     QUERY_EXP_MUN_SELECIONADO,
-    "data/comex/comex_municipio.csv",
+    "dados_comex_municipio",
     params={"municipio": municipio_de_interesse, "lista_anos": tuple(anos_comex)},
 )
 
-print("\nDados atualizados localmente com sucesso!")
+print(f"\nProcesso concluído em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}!")
