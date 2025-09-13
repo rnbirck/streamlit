@@ -596,8 +596,6 @@ elif pagina_selecionada == "Comércio Exterior":
         df_comex_ano, df_comex_mensal, municipio_de_interesse, municipios_de_interesse
     )
 
-    paises_options = sorted(df_comex_municipio["pais"].unique().tolist())
-
     with st.expander(
         f"Comércio Exterior de {municipio_de_interesse} por Destino e Produto",
         expanded=False,
@@ -605,9 +603,34 @@ elif pagina_selecionada == "Comércio Exterior":
         tab_pais, tab_produto = st.tabs(
             ["País", "Produto"],
         )
+
+        format_dict = {
+            "Valor Exportado no Mês (US$)": lambda x: f"{x:,.0f}".replace(",", "."),
+            "Valor Exportado Acumulado no Ano (US$)": lambda x: f"{x:,.0f}".replace(
+                ",", "."
+            ),
+            "Variação YoY no Mês (%)": lambda x: f"{x:.1f}%".replace(".", ","),
+            "Variação YoY Acumulada (%)": lambda x: f"{x:.1f}%".replace(".", ","),
+        }
+
         with tab_pais:
+            anos_disponiveis = sorted(
+                df_comex_municipio["ano"].unique().tolist(), reverse=True
+            )
+            ANOS_SELECIONADOS = st.multiselect(
+                "Selecione o(s) ano(s) para a tabela:",
+                options=anos_disponiveis,
+                default=anos_de_interesse[-1],
+                key="anos_comex_pais_multiselect",
+            )
+            df_comex_pais = df_comex_municipio[
+                df_comex_municipio["ano"].isin(ANOS_SELECIONADOS)
+            ]
+            if not ANOS_SELECIONADOS:
+                st.warning("Por favor, selecione ao menos um ano.")
+
             df_comex_pais = (
-                df_comex_municipio.groupby(["ano", "mes", "pais"], as_index=False)
+                df_comex_pais.groupby(["ano", "mes", "pais"], as_index=False)
                 .agg(
                     {
                         "valor_exp_mensal": "sum",
@@ -664,6 +687,8 @@ elif pagina_selecionada == "Comércio Exterior":
                 )
             )
 
+            paises_options = sorted(df_comex_pais["País"].unique().tolist())
+
             paises_selecionados_filtro = st.multiselect(
                 label="Filtrar a tabela por país (opcional):",
                 options=paises_options,
@@ -673,24 +698,111 @@ elif pagina_selecionada == "Comércio Exterior":
             df_comex_pais_exibir = df_comex_pais.copy()
             if paises_selecionados_filtro:
                 df_comex_pais_exibir = df_comex_pais_exibir[
-                    df_comex_pais_exibir["pais"].isin(paises_selecionados_filtro)
+                    df_comex_pais_exibir["País"].isin(paises_selecionados_filtro)
                 ]
 
-            format_dict = {
-                "Valor Exportado no Mês (US$)": lambda x: f"{x:,.0f}".replace(",", "."),
-                "Valor Exportado Acumulado no Ano (US$)": lambda x: f"{x:,.0f}".replace(
-                    ",", "."
-                ),
-                "Variação YoY no Mês (%)": lambda x: f"{x:.1f}%".replace(".", ","),
-                "Variação YoY Acumulada (%)": lambda x: f"{x:.1f}%".replace(".", ","),
-            }
-
-            styled_df = df_comex_pais_exibir.style.map(
+            styled_df_pais = df_comex_pais_exibir.style.map(
                 destacar_percentuais,
                 subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
             ).format(format_dict)
 
-            st.dataframe(styled_df, hide_index=True, use_container_width=True)
+            st.dataframe(styled_df_pais, hide_index=True, use_container_width=True)
+
+        with tab_produto:
+            anos_disponiveis = sorted(
+                df_comex_municipio["ano"].unique().tolist(), reverse=True
+            )
+            ANOS_SELECIONADOS = st.multiselect(
+                "Selecione o(s) ano(s) para a tabela:",
+                options=anos_disponiveis,
+                default=anos_de_interesse[-1],
+                key="anos_comex_produto_multiselect",
+            )
+            df_comex_produto = df_comex_municipio[
+                df_comex_municipio["ano"].isin(ANOS_SELECIONADOS)
+            ]
+            if not ANOS_SELECIONADOS:
+                st.warning("Por favor, selecione ao menos um ano.")
+            df_comex_produto = (
+                df_comex_produto.groupby(["ano", "mes", "desc_sh4"], as_index=False)
+                .agg(
+                    {
+                        "valor_exp_mensal": "sum",
+                        "valor_exp_mensal_ano_anterior": "sum",
+                        "valor_acumulado_ano": "sum",
+                        "valor_acumulado_ano_anterior": "sum",
+                    }
+                )
+                .assign(
+                    yoy_mensal=lambda x: (
+                        x["valor_exp_mensal"] - x["valor_exp_mensal_ano_anterior"]
+                    )
+                    / x["valor_exp_mensal_ano_anterior"]
+                    * 100,
+                    yoy_acumulado=lambda x: (
+                        x["valor_acumulado_ano"] - x["valor_acumulado_ano_anterior"]
+                    )
+                    / x["valor_acumulado_ano_anterior"]
+                    * 100,
+                )
+                .sort_values(
+                    by=["ano", "mes", "valor_exp_mensal"],
+                    ascending=[False, False, False],
+                )
+                .query("ano in @anos_de_interesse")
+                .drop(
+                    columns=[
+                        "valor_exp_mensal_ano_anterior",
+                        "valor_acumulado_ano_anterior",
+                    ]
+                )
+                .replace([float("inf"), -float("inf")], float("nan"))[
+                    [
+                        "ano",
+                        "mes",
+                        "desc_sh4",
+                        "valor_exp_mensal",
+                        "yoy_mensal",
+                        "valor_acumulado_ano",
+                        "yoy_acumulado",
+                    ]
+                ]
+                .set_axis(
+                    [
+                        "Ano",
+                        "Mês",
+                        "Produto",
+                        "Valor Exportado no Mês (US$)",
+                        "Variação YoY no Mês (%)",
+                        "Valor Exportado Acumulado no Ano (US$)",
+                        "Variação YoY Acumulada (%)",
+                    ],
+                    axis=1,
+                )
+            )
+
+            produtos_options = sorted(df_comex_produto["Produto"].unique().tolist())
+
+            produtos_selecionados_filtro = st.multiselect(
+                label="Filtrar a tabela por produto (opcional):",
+                options=produtos_options,
+                key="filtro_tabela_comex_produto",
+            )
+
+            df_comex_produto_exibir = df_comex_produto.copy()
+            if produtos_selecionados_filtro:
+                df_comex_produto_exibir = df_comex_produto_exibir[
+                    df_comex_produto_exibir["Produto"].isin(
+                        produtos_selecionados_filtro
+                    )
+                ]
+
+            styled_df_produto = df_comex_produto_exibir.style.map(
+                destacar_percentuais,
+                subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
+            ).format(format_dict)
+
+            st.dataframe(styled_df_produto, hide_index=True, use_container_width=True)
 
     # col1, col2 = st.columns([1, 2])
     # with col1:
