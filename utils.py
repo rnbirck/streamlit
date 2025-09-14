@@ -115,9 +115,12 @@ def criar_grafico_barras(
     """
     Cria um gráfico de barras customizado e reutilizável com Plotly Express.
     """
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = [" - ".join(map(str, col)).strip() for col in df.columns.values]
 
     index_name = df.index.name if df.index.name is not None else "index"
     df_reset = df.reset_index()
+    index_name = df_reset.columns[0]
 
     df_long = df_reset.melt(id_vars=index_name, var_name="series", value_name="value")
 
@@ -204,3 +207,72 @@ def destacar_percentuais(val):
         return ""
     color = "green" if val > 0 else "red"
     return f"color: {color}"
+
+
+def criar_tabela_comex(df, colunas_agg, colunas_finais, anos_selecionados):
+    """
+    Cria uma tabela de dados de comércio exterior, agrupando por uma ou mais colunas.
+
+    Args:
+        df (pd.DataFrame): O DataFrame de entrada.
+        colunas_agg (list): Lista de nomes de colunas para agrupar (ex: ["pais", "desc_sh4"]).
+        colunas_finais (list): Lista de nomes para as colunas agrupadas no resultado final (ex: ["País", "Produto"]).
+        anos_selecionados (list): Lista de anos para filtrar no .query().
+    """
+
+    df_sorted = df.sort_values(by=["ano", "mes"])
+
+    df_agregado = df_sorted.groupby(["ano", "mes"] + colunas_agg, as_index=False).agg(
+        {
+            "valor_exp_mensal": "sum",
+            "valor_exp_mensal_ano_anterior": "sum",
+        }
+    )
+
+    grouping_cols = ["ano"] + colunas_agg
+    df_agregado["valor_acumulado_ano"] = df_agregado.groupby(grouping_cols)[
+        "valor_exp_mensal"
+    ].cumsum()
+    df_agregado["valor_acumulado_ano_anterior"] = df_agregado.groupby(grouping_cols)[
+        "valor_exp_mensal_ano_anterior"
+    ].cumsum()
+
+    colunas_resultado = (
+        ["Ano", "Mês"]
+        + colunas_finais
+        + [
+            "Valor Exportado no Mês (US$)",
+            "Variação YoY no Mês (%)",
+            "Valor Acumulado no Ano (US$)",
+            "Variação YoY Acumulada (%)",
+        ]
+    )
+
+    colunas_originais = (
+        ["ano", "mes"]
+        + colunas_agg
+        + [
+            "valor_exp_mensal",
+            "yoy_mensal",
+            "valor_acumulado_ano",
+            "yoy_acumulado",
+        ]
+    )
+    return (
+        df_agregado.assign(
+            yoy_mensal=lambda x: (
+                (x["valor_exp_mensal"] / x["valor_exp_mensal_ano_anterior"]) - 1
+            )
+            * 100,
+            yoy_acumulado=lambda x: (
+                (x["valor_acumulado_ano"] / x["valor_acumulado_ano_anterior"]) - 1
+            )
+            * 100,
+        )
+        .sort_values(
+            by=["ano", "mes", "valor_exp_mensal"], ascending=[False, False, False]
+        )
+        .query("ano in @anos_selecionados")
+        .replace([float("inf"), float("-inf"), float("nan")])[colunas_originais]
+        .set_axis(colunas_resultado, axis=1)
+    )
