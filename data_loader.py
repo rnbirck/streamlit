@@ -1,10 +1,7 @@
-# data_loader.py (versão final com leitura direta de URL)
-
 import streamlit as st
 import pandas as pd
 
-# Coloque aqui os IDs de cada uma das suas 5 planilhas
-# Encontre o ID no URL da sua planilha, entre '/d/' e '/edit'.
+# ID PLANILHAS GOOGLE SHEETS
 ID_EMPREGO_MUNICIPIOS = "1R-ehxIUZnRZLetEL0b2SgvkK-YQdtBBl1ff_dtgAYpg"
 ID_EMPREGO_CNAE = "1scPanyLdRKBLkWSwhxQiZryS1wVinfQ6vCqZakbkDmg"
 ID_COMEX_ANUAL = "1j4Xx0_PPHwDDvC9ybKhcbBovk3HpXUGVKnBfS5JxxEo"

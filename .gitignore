@@ -1,3 +1,4 @@
 *.csv
 credentials.json
 .streamlit/secrets.toml
+.env

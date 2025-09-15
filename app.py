@@ -525,80 +525,10 @@ def display_comex_municipios_expander(
             st.plotly_chart(fig_anual, width="stretch")
 
 
-def show_page_comex(
-    df_comex_ano,
-    df_comex_mensal,
-    municipio_de_interesse,
-    municipios_de_interesse,
-):
-    """Função principal que renderiza a página de Comércio Exterior."""
-
-    display_comex_kpi_cards(df_comex_ano, df_comex_mensal, municipio_de_interesse)
-    st.markdown("##### Clique nos menus abaixo para explorar os dados")
-
-    display_comex_municipios_expander(
-        df_mes=df_comex_mensal,
-        municipio_interesse=municipio_de_interesse,
-        municipios_interesse=municipios_de_interesse,
-    )
-
-
-# ==============================================================================
-# CARREGAMENTO DE DADOS
-# ==============================================================================
-
-# Emprego
-df_caged = carregar_dados_emprego_municipios(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
-df_caged_cnae = carregar_dados_emprego_cnae(
-    municipio=municipio_de_interesse, anos=anos_de_interesse
-)
-
-# Comércio Exterior
-anos_comex = range(min(anos_de_interesse) - 1, max(anos_de_interesse) + 1)
-df_comex_ano = carregar_dados_comex_anual(
-    municipios=municipios_de_interesse, anos=anos_comex
-)
-
-df_comex_mensal = carregar_dados_comex_mensal(
-    municipios=municipios_de_interesse, anos=anos_comex
-)
-
-df_comex_municipio = carregar_dados_comex_municipio(
-    municipio=municipio_de_interesse, anos=anos_comex
-)
-# ==============================================================================
-# BARRA LATERAL E NAVEGAÇÃO ENTRE PÁGINAS
-# ==============================================================================
-
-with st.sidebar:
-    pagina_selecionada = option_menu(
-        menu_title="Menu",
-        options=["Emprego", "Comércio Exterior"],
-        icons=["briefcase-fill", "globe2"],
-        menu_icon="cast",
-        default_index=0,
-    )
-# ==============================================================================
-# PÁGINA DE EMPREGO
-# ==============================================================================
-
-if pagina_selecionada == "Emprego":
-    # Chama a função principal da página de emprego, passando os dados e configurações
-    show_page_emprego(
-        df_caged, df_caged_cnae, municipio_de_interesse, municipios_de_interesse
-    )
-
-elif pagina_selecionada == "Comércio Exterior":
-    st.title("Dashboard de Comércio Exterior")
-    st.markdown("### Análise de Exportações")
-    show_page_comex(
-        df_comex_ano, df_comex_mensal, municipio_de_interesse, municipios_de_interesse
-    )
-
+def display_comex_produto_pais_expander(df, municipio_interesse):
+    """Exibe o expander com análise de exportações por Produto e País do Municipio Selecionado."""
     with st.expander(
-        f"Comércio Exterior de {municipio_de_interesse} por Destino e Produto",
+        f"Comércio Exterior de {municipio_interesse} por Destino e Produto",
         expanded=False,
     ):
         tab_pais, tab_produto, tab_pais_produto = st.tabs(
@@ -613,18 +543,14 @@ elif pagina_selecionada == "Comércio Exterior":
         }
 
         with tab_pais:
-            anos_disponiveis = sorted(
-                df_comex_municipio["ano"].unique().tolist(), reverse=True
-            )
+            anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
             ANOS_SELECIONADOS = st.multiselect(
                 "Selecione o(s) ano(s) para a tabela:",
                 options=anos_disponiveis,
                 default=anos_de_interesse[-1],
                 key="anos_comex_pais_multiselect",
             )
-            df_comex_pais = df_comex_municipio[
-                df_comex_municipio["ano"].isin(ANOS_SELECIONADOS)
-            ]
+            df_comex_pais = df[df["ano"].isin(ANOS_SELECIONADOS)]
             if not ANOS_SELECIONADOS:
                 st.warning("Por favor, selecione ao menos um ano.")
 
@@ -657,18 +583,14 @@ elif pagina_selecionada == "Comércio Exterior":
             st.dataframe(styled_df_pais, hide_index=True, use_container_width=True)
 
         with tab_produto:
-            anos_disponiveis = sorted(
-                df_comex_municipio["ano"].unique().tolist(), reverse=True
-            )
+            anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
             ANOS_SELECIONADOS = st.multiselect(
                 "Selecione o(s) ano(s) para a tabela:",
                 options=anos_disponiveis,
                 default=anos_de_interesse[-1],
                 key="anos_comex_produto_multiselect",
             )
-            df_comex_produto = df_comex_municipio[
-                df_comex_municipio["ano"].isin(ANOS_SELECIONADOS)
-            ]
+            df_comex_produto = df[df["ano"].isin(ANOS_SELECIONADOS)]
             if not ANOS_SELECIONADOS:
                 st.warning("Por favor, selecione ao menos um ano.")
             df_comex_produto = criar_tabela_comex(
@@ -702,18 +624,14 @@ elif pagina_selecionada == "Comércio Exterior":
             st.dataframe(styled_df_produto, hide_index=True, use_container_width=True)
 
         with tab_pais_produto:
-            anos_disponiveis = sorted(
-                df_comex_municipio["ano"].unique().tolist(), reverse=True
-            )
+            anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
             ANOS_SELECIONADOS = st.multiselect(
                 "Selecione o(s) ano(s) para a tabela:",
                 options=anos_disponiveis,
                 default=anos_de_interesse[-1],
                 key="anos_comex_pais_produto_multiselect",
             )
-            df_filtrado_anos_pais_produto = df_comex_municipio[
-                df_comex_municipio["ano"].isin(ANOS_SELECIONADOS)
-            ]
+            df_filtrado_anos_pais_produto = df[df["ano"].isin(ANOS_SELECIONADOS)]
 
             df_comex_pais_produto = criar_tabela_comex(
                 df=df_filtrado_anos_pais_produto,
@@ -723,8 +641,20 @@ elif pagina_selecionada == "Comércio Exterior":
             )
 
             paises_options = sorted(df_comex_pais_produto["País"].unique().tolist())
+            paises_default = (
+                df_comex_pais_produto.groupby(["País"], as_index=False)[
+                    "Valor Exportado no Mês (US$)"
+                ]
+                .sum()
+                .sort_values(by="Valor Exportado no Mês (US$)", ascending=False)
+                .head(5)["País"]
+                .tolist()
+            )
             paises_selecionados = st.multiselect(
-                "Filtrar por País:", options=paises_options, key="filtro_pp_pais"
+                "Filtrar por País:",
+                options=paises_options,
+                default=paises_default,
+                key="filtro_pp_pais",
             )
 
             if paises_selecionados:
@@ -786,292 +716,89 @@ elif pagina_selecionada == "Comércio Exterior":
                     df=df_grafico,
                     titulo="Exportações Mensais",
                     label_y="Valor Exportado (US$)",
-                    barmode="group",
+                    barmode="stack",
                     height=500,
                     data_label_format=",.0f",
                     hover_label_format=",.0f",
                 )
                 st.plotly_chart(fig_hist, use_container_width=True)
 
-    # col1, col2 = st.columns([1, 2])
-    # with col1:
-    #     select_all_paises = st.checkbox(
-    #         "Selecionar todos os países", value=False, key="select_all_paises"
-    #     )
-    #     if select_all_paises:
-    #         default_selection_paises = paises_options
-    #     else:
-    #         default_selection_paises = []
 
-    #     pais_selecionado = st.multiselect(
-    #         "Selecione o(s) país(es):",
-    #         options=paises_options,
-    #         default=default_selection_paises,
-    #         key="comex_paises_multiselect",
-    #     )
-    #     if not pais_selecionado:
-    #         st.warning("Por favor, selecione ao menos um país.")
+def show_page_comex(
+    df_comex_ano,
+    df_comex_mensal,
+    municipio_de_interesse,
+    municipios_de_interesse,
+):
+    """Função principal que renderiza a página de Comércio Exterior."""
 
-    # with col2:
-    #     produtos_selecionados = []
-    #     if pais_selecionado:
-    #         df_comex_filtrado_pais = df_comex_municipio[
-    #             df_comex_municipio["pais"].isin(pais_selecionado)
-    #         ]
-    #         produtos_filtrados_options = sorted(
-    #             df_comex_filtrado_pais["desc_sh4"].unique().tolist()
-    #         )
-    #         select_all_produtos = st.checkbox(
-    #             "Selecionar todos os produtos",
-    #             value=False,
-    #             key="select_all_produtos",
-    #         )
-    #         if select_all_produtos:
-    #             default_selection_produtos = produtos_filtrados_options
-    #         else:
-    #             default_selection_produtos = []
+    display_comex_kpi_cards(df_comex_ano, df_comex_mensal, municipio_de_interesse)
+    st.markdown("##### Clique nos menus abaixo para explorar os dados")
 
-    #         produtos_selecionados = st.multiselect(
-    #             "Selecione o(s) produto(s):",
-    #             options=produtos_filtrados_options,
-    #             default=default_selection_produtos,
-    #             key="comex_produtos_multiselect",
-    #         )
-    #         if not produtos_selecionados:
-    #             st.warning("Por favor, selecione ao menos um produto.")
+    display_comex_municipios_expander(
+        df_mes=df_comex_mensal,
+        municipio_interesse=municipio_de_interesse,
+        municipios_interesse=municipios_de_interesse,
+    )
+    display_comex_produto_pais_expander(
+        df=df_comex_municipio, municipio_interesse=municipio_de_interesse
+    )
 
-    # with tab_hist:
-    #     ANO_SELECIONADO = st.selectbox(
-    #         "Selecione o ano para o gráfico:",
-    #         options=anos_de_interesse,
-    #         index=len(anos_de_interesse) - 1,
-    #         key="hist_ano_comex_mun",
-    #     )
 
-    #     if not pais_selecionado or not produtos_selecionados:
-    #         st.warning("Por favor, selecione ao menos um país e um produto.")
+# ==============================================================================
+# CARREGAMENTO DE DADOS
+# ==============================================================================
 
-    #     elif ANO_SELECIONADO:
-    #         df_comex_hist = df_comex_municipio[
-    #             (df_comex_municipio["ano"] == ANO_SELECIONADO)
-    #             & (df_comex_municipio["pais"].isin(pais_selecionado))
-    #             & (df_comex_municipio["desc_sh4"].isin(produtos_selecionados))
-    #         ]
-    #         df_comex_hist = (
-    #             df_comex_hist.assign(
-    #                 date=lambda x: pd.to_datetime(
-    #                     x["ano"].astype(str)
-    #                     + "-"
-    #                     + x["mes"].astype(str).str.zfill(2)
-    #                     + "-01"
-    #                 ),
-    #             )
-    #             .pivot_table(
-    #                 index="date",
-    #                 # columns="pais",
-    #                 values="valor_exp_mensal",
-    #                 aggfunc="sum",
-    #                 fill_value=0,
-    #             )
-    #             .sort_index()
-    #             .apply(lambda x: x.round(2))
-    #         )
+# Emprego
+df_caged = carregar_dados_emprego_municipios(
+    municipios=municipios_de_interesse, anos=anos_de_interesse
+)
+df_caged_cnae = carregar_dados_emprego_cnae(
+    municipio=municipio_de_interesse, anos=anos_de_interesse
+)
 
-    #         # st.dataframe(df_comex_hist)
+# Comércio Exterior
+anos_comex = range(min(anos_de_interesse) - 1, max(anos_de_interesse) + 1)
+df_comex_ano = carregar_dados_comex_anual(
+    municipios=municipios_de_interesse, anos=anos_comex
+)
 
-    #         fig_hist = criar_grafico_barras(
-    #             df=df_comex_hist,
-    #             titulo=f"Exportações em {ANO_SELECIONADO}",
-    #             label_y="(Milhões de US$)",
-    #             barmode="group",
-    #             height=500,
-    #             data_label_format=",.0f",
-    #             hover_label_format=",.0f",
-    #         )
-    #         st.plotly_chart(fig_hist, width="stretch")
+df_comex_mensal = carregar_dados_comex_mensal(
+    municipios=municipios_de_interesse, anos=anos_comex
+)
 
-    # with tab_produto:
-    #     if not pais_selecionado or not produtos_selecionados:
-    #         st.warning("Por favor, selecione ao menos um país e um produto.")
+df_comex_municipio = carregar_dados_comex_municipio(
+    municipio=municipio_de_interesse, anos=anos_comex
+)
+# ==============================================================================
+# BARRA LATERAL E NAVEGAÇÃO ENTRE PÁGINAS
+# ==============================================================================
 
-    #     df_comex_prod = (
-    #         df_comex_municipio[
-    #             (df_comex_municipio["pais"].isin(pais_selecionado))
-    #             & (df_comex_municipio["desc_sh4"].isin(produtos_selecionados))
-    #         ]
-    #         .assign(
-    #             yoy_mensal=lambda x: (
-    #                 x["valor_exp_mensal"] / x["valor_exp_mensal_ano_anterior"] - 1
-    #             )
-    #             * 100,
-    #             yoy_acumulado=lambda x: (
-    #                 x["valor_acumulado_ano"] / x["valor_acumulado_ano_anterior"] - 1
-    #             )
-    #             * 100,
-    #         )
-    #         .drop(
-    #             columns=[
-    #                 "municipio",
-    #                 "valor_exp_mensal_ano_anterior",
-    #                 "valor_acumulado_ano_anterior",
-    #             ]
-    #         )
-    #         .sort_values(
-    #             by=["ano", "mes", "valor_exp_mensal"],
-    #             ascending=[False, False, False],
-    #         )
-    #         .rename(
-    #             columns={
-    #                 "desc_sh4": "Produto",
-    #                 "pais": "País",
-    #                 "ano": "Ano",
-    #                 "mes": "Mês",
-    #                 "valor_exp_mensal": "Valor Exportado (US$)",
-    #                 "yoy_mensal": "Variação Anual Mensal (%)",
-    #                 "valor_acumulado_ano": "Valor Acumulado no Ano (US$)",
-    #                 "yoy_acumulado": "Variação Anual Acumulada (%)",
-    #             }
-    #         )
-    #     )
-    #     st.dataframe(df_comex_prod.style.background_gradient(cmap="coolwarm_r"))
+with st.sidebar:
+    pagina_selecionada = option_menu(
+        menu_title="Menu",
+        options=["Emprego", "Comércio Exterior"],
+        icons=["briefcase-fill", "globe2"],
+        menu_icon="cast",
+        default_index=0,
+    )
+# ==============================================================================
+# PÁGINA DE EMPREGO
+# ==============================================================================
 
-    # st.dataframe(
-    #     df_comex_mun_filtrado := df_comex_municipio[
-    #         (
-    #             df_comex_municipio["pais"].isin(pais_selecionado)
-    #             & df_comex_municipio["desc_sh4"].isin(produtos_selecionados)
-    #         )
-    #     ]
-    # )
-    # anos_disponiveis = sorted(df_filtrado["ano"].unique().tolist(), reverse=True)
+if pagina_selecionada == "Emprego":
+    # Chama a função principal da página de emprego, passando os dados e configurações
+    show_page_emprego(
+        df_caged, df_caged_cnae, municipio_de_interesse, municipios_de_interesse
+    )
 
-    # with tab_hist:
-    #     ANO_SELECIONADO = st.selectbox(
-    #         "Selecione o ano para o gráfico:",
-    #         options=anos_disponiveis,
-    #         index=0,
-    #         key="hist_ano_comex",
-    #     )
-    #     df_comex_hist = df_filtrado[df_filtrado["ano"] == ANO_SELECIONADO]
-    #     if not ANO_SELECIONADO:
-    #         st.warning("Por favor, selecione ao menos um ano.")
-    #     df_comex_hist = (
-    #         df_comex_hist.assign(
-    #             date=lambda x: pd.to_datetime(
-    #                 x["ano"].astype(str)
-    #                 + "-"
-    #                 + x["mes"].astype(str).str.zfill(2)
-    #                 + "-01"
-    #             ),
-    #             exp_milhoes=lambda x: x["total_exp_mensal"] / 1_000_000,
-    #         )
-    #         .pivot_table(
-    #             index="date",
-    #             columns="municipio",
-    #             values="exp_milhoes",
-    #             aggfunc="sum",
-    #             fill_value=0,
-    #         )
-    #         .sort_index()
-    #         .apply(lambda x: x.round(2))
-    #     )
+elif pagina_selecionada == "Comércio Exterior":
+    st.title("Dashboard de Comércio Exterior")
+    st.markdown("### Análise de Exportações")
+    show_page_comex(
+        df_comex_ano, df_comex_mensal, municipio_de_interesse, municipios_de_interesse
+    )
 
-    #     fig_hist = criar_grafico_barras(
-    #         df=df_comex_hist,
-    #         titulo=f"Exportações em {ANO_SELECIONADO}",
-    #         label_y="(Milhões de US$)",
-    #         barmode="group",
-    #         height=500,
-    #         data_label_format=".1f",
-    #         hover_label_format=",.2f",
-    #     )
-    #     st.plotly_chart(fig_hist, width="stretch")
-
-    # with tab_mes:
-    #     ult_ano = df_filtrado["ano"].max()
-    #     ult_mes = df_filtrado[df_filtrado["ano"] == ult_ano]["mes"].max()
-    #     df_comex_mes = (
-    #         df_filtrado[df_filtrado["mes"] == ult_mes]
-    #         .assign(exp_milhoes=lambda x: x["total_exp_mensal"] / 1_000_000)
-    #         .pivot_table(
-    #             index="ano",
-    #             columns="municipio",
-    #             values="exp_milhoes",
-    #             aggfunc="sum",
-    #             fill_value=0,
-    #         )
-    #         .sort_index()
-    #         .apply(lambda x: x.round(2))
-    #     )
-    #     nome_mes = MESES_DIC[ult_mes]
-    #     df_comex_mes.index = (
-    #         nome_mes + "/" + df_comex_mes.index.astype(str).str.slice(-2)
-    #     )
-    #     fig_mes = criar_grafico_barras(
-    #         df=df_comex_mes,
-    #         titulo=f"Exportações em {MESES_DIC[ult_mes]}",
-    #         label_y="(Milhões de US$)",
-    #         barmode="group",
-    #         height=500,
-    #         data_label_format=".1f",
-    #         hover_label_format=",.2f",
-    #     )
-    #     st.plotly_chart(fig_mes, width="stretch")
-
-    # with tab_acum:
-    #     df_acum = (
-    #         df_filtrado[df_filtrado["mes"] == ult_mes]
-    #         .assign(exp_milhoes=lambda x: x["total_exp_acumulado"] / 1_000_000)
-    #         .pivot_table(
-    #             index="ano",
-    #             columns="municipio",
-    #             values="exp_milhoes",
-    #             aggfunc="sum",
-    #             fill_value=0,
-    #         )
-    #         .sort_index()
-    #     )
-    #     df_acum.index = (
-    #         "Jan-"
-    #         + MESES_DIC[ult_mes][:3]
-    #         + "/"
-    #         + df_acum.index.astype(str).str.slice(-2)
-    #     )
-    #     fig_acum = criar_grafico_barras(
-    #         df=df_acum,
-    #         titulo=f"Exportações de Janeiro a {MESES_DIC[ult_mes]}",
-    #         label_y="(Milhões de US$)",
-    #         barmode="group",
-    #         height=500,
-    #         data_label_format=".1f",
-    #         hover_label_format=",.2f",
-    #     )
-    #     st.plotly_chart(fig_acum, width="stretch")
-
-    # with tab_anual:
-    #     ano_completo = checar_ult_ano_completo(df_filtrado)
-    #     df_comex_ano = (
-    #         df_filtrado[df_filtrado["ano"] <= ano_completo]
-    #         .assign(exp_milhoes=lambda x: x["total_exp_mensal"] / 1_000_000)
-    #         .pivot_table(
-    #             index="ano",
-    #             columns="municipio",
-    #             values="exp_milhoes",
-    #             aggfunc="sum",
-    #             fill_value=0,
-    #         )
-    #         .sort_index(ascending=False)
-    #     )
-    #     fig_anual = criar_grafico_barras(
-    #         df=df_comex_ano,
-    #         titulo="Exportações Anuais",
-    #         label_y="(Milhões de US$)",
-    #         barmode="group",
-    #         height=500,
-    #         data_label_format=",.1f",
-    #         hover_label_format=",.2f",
-    #     )
-    #     st.plotly_chart(fig_anual, width="stretch")
 
 manter_posicao_scroll()
 # %%

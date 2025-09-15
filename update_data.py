@@ -3,6 +3,8 @@ from sqlalchemy import create_engine, text
 import json
 from gspread_pandas import Spread
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
 from queries import (
     QUERY_EMPREGO_MUNICIPIOS,
@@ -19,17 +21,23 @@ from app import (
     anos_comex,
 )
 
+load_dotenv()
 
-# <<< MUDANÇA CRÍTICA AQUI >>>
-# A função agora espera 'gspread_config', um dicionário
+usuario = os.getenv("DB_USUARIO")
+senha = os.getenv("DB_SENHA")
+host = os.getenv("DB_HOST")
+banco = os.getenv("DB_BANCO")
+
+# --- CONFIGURAÇÃO DA CONEXÃO LOCAL ---
+engine = create_engine(f"postgresql+psycopg2://{usuario}:{senha}@{host}/{banco}")
+
+
 def atualizar_google_sheet(gspread_config, engine, query, sheet_name, params=None):
     """Executa uma query e envia o resultado para uma Google Sheet específica."""
     print(f"Processando: '{sheet_name}'...")
     try:
         df = pd.read_sql_query(text(query), engine, params=params)
 
-        # <<< MUDANÇA CRÍTICA AQUI >>>
-        # Usamos o dicionário com o parâmetro 'config'
         spread = Spread(sheet_name, config=gspread_config)
 
         spread.df_to_sheet(df, index=False, headers=True, start="A1", replace=True)
@@ -38,16 +46,8 @@ def atualizar_google_sheet(gspread_config, engine, query, sheet_name, params=Non
         print(f"ERRO ao atualizar a planilha '{sheet_name}': {e}")
 
 
-# --- CONFIGURAÇÃO DA CONEXÃO LOCAL ---
-usuario = "rnbirck"
-senha = "ceiunisinos"
-host = "localhost"
-banco = "cei"
-engine = create_engine(f"postgresql+psycopg2://{usuario}:{senha}@{host}/{banco}")
-
 print("Iniciando o script de atualização de dados...")
 
-# --- CARREGA AS CREDENCIAIS DO GOOGLE DO ARQUIVO JSON ---
 try:
     with open("credentials.json", "r") as f:
         gspread_config = json.load(f)
@@ -61,8 +61,7 @@ except Exception as e:
 
 print("\nIniciando o script de atualização de dados para o Google Sheets...")
 
-# --- EXECUÇÃO DAS ATUALIZAÇÕES ---
-# As chamadas continuam corretas, passando o dicionário 'gspread_config'
+
 atualizar_google_sheet(
     gspread_config,
     engine,
