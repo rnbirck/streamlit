@@ -404,7 +404,8 @@ def prepara_dados_graficos_comex(df_filtrado, anos_de_interesse):
     """
 
     ult_ano_comex, ult_mes_comex = None, None
-    df_comex_hist, df_comex_mes, df_comex_acum, df_comex_ano = (
+    df_comex_hist, df_comex_hist_perc, df_comex_mes, df_comex_acum, df_comex_ano = (
+        pd.DataFrame(),
         pd.DataFrame(),
         pd.DataFrame(),
         pd.DataFrame(),
@@ -415,7 +416,7 @@ def prepara_dados_graficos_comex(df_filtrado, anos_de_interesse):
         ult_ano_comex = df_filtrado["ano"].max()
         ult_mes_comex = df_filtrado[df_filtrado["ano"] == ult_ano_comex]["mes"].max()
 
-        # Histórico Mensal
+        # Histórico Mensal - Valor
         df_comex_hist = (
             df_filtrado.assign(
                 date=lambda x: pd.to_datetime(
@@ -430,6 +431,26 @@ def prepara_dados_graficos_comex(df_filtrado, anos_de_interesse):
                 index="date",
                 columns="municipio",
                 values="exp_milhoes",
+                aggfunc="sum",
+                fill_value=0,
+            )
+            .sort_index()
+            .apply(lambda x: x.round(2))
+        )
+        # Historico Mensal - Percentual
+        df_comex_hist_perc = (
+            df_filtrado.assign(
+                date=lambda x: pd.to_datetime(
+                    x["ano"].astype(str)
+                    + "-"
+                    + x["mes"].astype(str).str.zfill(2)
+                    + "-01"
+                ),
+            )
+            .pivot_table(
+                index="date",
+                columns="municipio",
+                values="perc_var_mes_ano_anterior",
                 aggfunc="sum",
                 fill_value=0,
             )
@@ -483,6 +504,7 @@ def prepara_dados_graficos_comex(df_filtrado, anos_de_interesse):
 
     return (
         df_comex_hist,
+        df_comex_hist_perc,
         df_comex_mes,
         df_comex_acum,
         df_comex_ano,
@@ -518,6 +540,7 @@ def display_comex_municipios_expander(
 
         (
             df_comex_hist,
+            df_comex_hist_perc,
             df_comex_mes,
             df_comex_acum,
             df_comex_ano,
@@ -537,6 +560,11 @@ def display_comex_municipios_expander(
             df_comex_hist_filtrado_ano = df_comex_hist[
                 df_comex_hist.index.year == ANO_SELECIONADO
             ]
+
+            df_comex_hist_perc_filtrado_ano = df_comex_hist_perc[
+                df_comex_hist_perc.index.year == ANO_SELECIONADO
+            ]
+
             if not ANO_SELECIONADO:
                 st.warning("Por favor, selecione ao menos um ano.")
 
@@ -549,7 +577,33 @@ def display_comex_municipios_expander(
                 data_label_format=".1f",
                 hover_label_format=",.2f",
             )
-            st.plotly_chart(fig_hist, width="stretch")
+
+            fig_hist_perc = criar_grafico_barras(
+                df=df_comex_hist_perc_filtrado_ano,
+                titulo=f"Variação Percentual das Exportações em {ANO_SELECIONADO}",
+                label_y="Variação em relação ao mesmo mês do ano anterior (%)",
+                barmode="group",
+                height=500,
+                data_label_format=".1f",
+                hover_label_format=",.2f",
+            )
+
+            view_mode = st.radio(
+                "Selecione o modo de Visualização:",
+                options=["Valor (Milhões de US$)", "Variação YoY (%)"],
+                horizontal=True,
+                label_visibility="collapsed",
+                key="view_mode_comex_municipios_hist",
+            )
+
+            if view_mode == "Valor (Milhões de US$)":
+                st.plotly_chart(fig_hist, width="stretch")
+
+            elif view_mode == "Variação YoY (%)":
+                if fig_hist_perc:
+                    st.plotly_chart(fig_hist_perc, use_container_width=True)
+                else:
+                    st.warning("Nenhum dado disponível para o gráfico.")
 
         with tab_mes:
             nome_mes = MESES_DIC[ult_mes_comex]
