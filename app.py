@@ -32,6 +32,11 @@ st.set_page_config(layout="wide", page_title="Dashboard CEI ", page_icon="📊")
 carregar_css("style.css")
 
 # ==============================================================================
+# INICIALIZAÇÃO DO SESSION STATE
+# ==============================================================================
+if "emprego_expander_state" not in st.session_state:
+    st.session_state.emprego_expander_state = False
+# ==============================================================================
 # DEFINIÇÕES GERAIS
 # ==============================================================================
 municipio_de_interesse = "São Leopoldo"
@@ -94,9 +99,89 @@ def display_emprego_kpi_cards(df, municipio_interesse):
         )
 
 
+def expander_emprego_callback():
+    """Garante que o expander de emprego permaneça aberto após a interação."""
+    st.session_state.emprego_expander_state = True
+
+
+@st.cache_data
+def preparar_dados_graficos_emprego(df_filtrado):
+    """
+    Recebe um DataFrame filtrado e retorna todos os DataFrames pivotados e prontos
+    para os gráficos do expander de emprego. Esta função é cacheada para performance.
+    """
+    # Histórico Mensal
+    df_hist = (
+        df_filtrado.assign(
+            date=lambda x: pd.to_datetime(
+                x["ano"].astype(str) + "-" + x["mes"].astype(str).str.zfill(2) + "-01"
+            )
+        )
+        .pivot_table(
+            index="date",
+            columns="municipio",
+            values="saldo_movimentacao",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .sort_index()
+    )
+    # Mês Atual
+    ult_ano = df_filtrado["ano"].max()
+    ult_mes = df_filtrado[df_filtrado["ano"] == ult_ano]["mes"].max()
+
+    df_mes = (
+        df_filtrado[df_filtrado["mes"] == ult_mes]
+        .pivot_table(
+            index="ano",
+            columns="municipio",
+            values="saldo_movimentacao",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .sort_index()
+    )
+    df_mes.index = MESES_DIC[ult_mes] + "/" + df_mes.index.astype(str).str.slice(-2)
+
+    # Acumulado no Ano
+    df_acum = (
+        df_filtrado[df_filtrado["mes"] <= ult_mes]
+        .pivot_table(
+            index="ano",
+            columns="municipio",
+            values="saldo_movimentacao",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .sort_index()
+    )
+    df_acum.index = (
+        "Jan-" + MESES_DIC[ult_mes][:3] + "/" + df_acum.index.astype(str).str.slice(-2)
+    )
+
+    # Anual
+    ano_completo = checar_ult_ano_completo(df_filtrado)
+    df_anual = (
+        df_filtrado[df_filtrado["ano"] <= ano_completo]
+        .pivot_table(
+            index="ano",
+            columns="municipio",
+            values="saldo_movimentacao",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .sort_index(ascending=False)
+    )
+
+    return df_hist, df_mes, df_acum, df_anual, ult_ano, ult_mes
+
+
 def display_emprego_municipios_expander(df, municipios_interesse, municipio_interesse):
     """Exibe o expander com análise de saldo de emprego para múltiplos municípios."""
-    with st.expander("Saldo de Emprego por Município", expanded=False):
+    with st.expander(
+        "Saldo de Emprego por Município",
+        expanded=st.session_state.emprego_expander_state,
+    ):
         municipios_selecionados = st.multiselect(
             "Selecione o(s) município(s):",
             options=municipios_interesse,
@@ -108,12 +193,15 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
             st.warning("Por favor, selecione ao menos um município.")
             return None
 
+        df_filtrado = df[df["municipio"].isin(municipios_selecionados)]
+        df_hist, df_mes, df_acum, df_anual, ult_ano, ult_mes = (
+            preparar_dados_graficos_emprego(df_filtrado)
+        )
+        anos_disponiveis = sorted(df_filtrado["ano"].unique().tolist(), reverse=True)
+
         tab_hist, tab_mes, tab_acum, tab_anual = st.tabs(
             ["Histórico Mensal", "Mês Atual", "Acumulado no Ano", "Anual"],
         )
-
-        df_filtrado = df[df["municipio"].isin(municipios_selecionados)]
-        anos_disponiveis = sorted(df_filtrado["ano"].unique().tolist(), reverse=True)
 
         with tab_hist:
             ANO_SELECIONADO = st.selectbox(
@@ -122,26 +210,8 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
                 index=0,
                 key="hist_ano_emprego",
             )
-            df_hist = df_filtrado[df_filtrado["ano"] == ANO_SELECIONADO]
 
-            df_hist = (
-                df_hist.assign(
-                    date=lambda x: pd.to_datetime(
-                        x["ano"].astype(str)
-                        + "-"
-                        + x["mes"].astype(str).str.zfill(2)
-                        + "-01"
-                    )
-                )
-                .pivot_table(
-                    index="date",
-                    columns="municipio",
-                    values="saldo_movimentacao",
-                    aggfunc="sum",
-                    fill_value=0,
-                )
-                .sort_index()
-            )
+            df_hist = df_hist[df_hist.index.year == ANO_SELECIONADO]
 
             fig_hist = criar_grafico_barras(
                 df=df_hist,
@@ -155,21 +225,6 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
             st.plotly_chart(fig_hist, width="stretch")
 
         with tab_mes:
-            ult_ano = df_filtrado["ano"].max()
-            ult_mes = df_filtrado[df_filtrado["ano"] == ult_ano]["mes"].max()
-            df_mes = (
-                df_filtrado[df_filtrado["mes"] == ult_mes]
-                .pivot_table(
-                    index="ano",
-                    columns="municipio",
-                    values="saldo_movimentacao",
-                    aggfunc="sum",
-                    fill_value=0,
-                )
-                .sort_index()
-            )
-            nome_mes = MESES_DIC[ult_mes]
-            df_mes.index = nome_mes + "/" + df_mes.index.astype(str).str.slice(-2)
             fig_mes = criar_grafico_barras(
                 df=df_mes,
                 titulo=f"Saldo Mensal de Emprego em {MESES_DIC[ult_mes]}",
@@ -182,23 +237,6 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
             st.plotly_chart(fig_mes, width="stretch")
 
         with tab_acum:
-            df_acum = (
-                df_filtrado[df_filtrado["mes"] <= ult_mes]
-                .pivot_table(
-                    index="ano",
-                    columns="municipio",
-                    values="saldo_movimentacao",
-                    aggfunc="sum",
-                    fill_value=0,
-                )
-                .sort_index()
-            )
-            df_acum.index = (
-                "Jan-"
-                + MESES_DIC[ult_mes][:3]
-                + "/"
-                + df_acum.index.astype(str).str.slice(-2)
-            )
             fig_acum = criar_grafico_barras(
                 df=df_acum,
                 titulo=f"Saldo Acumulado de Emprego de Janeiro a {MESES_DIC[ult_mes]}",
@@ -211,18 +249,6 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
             st.plotly_chart(fig_acum, width="stretch")
 
         with tab_anual:
-            ano_completo = checar_ult_ano_completo(df_filtrado)
-            df_anual = (
-                df_filtrado[df_filtrado["ano"] <= ano_completo]
-                .pivot_table(
-                    index="ano",
-                    columns="municipio",
-                    values="saldo_movimentacao",
-                    aggfunc="sum",
-                    fill_value=0,
-                )
-                .sort_index(ascending=False)
-            )
             fig_anual = criar_grafico_barras(
                 df=df_anual,
                 titulo="Saldo Anual de Emprego",
@@ -370,6 +396,101 @@ def display_comex_kpi_cards(df_ano, df_mes, municipio_interesse):
         )
 
 
+@st.cache_data
+def prepara_dados_graficos_comex(df_filtrado, anos_de_interesse):
+    """
+    Recebe um DataFrame de comex filtrado e retorna todos os DataFrames pivotados
+    e o último ano/mês para os títulos dos gráficos.
+    """
+
+    ult_ano_comex, ult_mes_comex = None, None
+    df_comex_hist, df_comex_mes, df_comex_acum, df_comex_ano = (
+        pd.DataFrame(),
+        pd.DataFrame(),
+        pd.DataFrame(),
+        pd.DataFrame(),
+    )
+
+    if not df_filtrado.empty:
+        ult_ano_comex = df_filtrado["ano"].max()
+        ult_mes_comex = df_filtrado[df_filtrado["ano"] == ult_ano_comex]["mes"].max()
+
+        # Histórico Mensal
+        df_comex_hist = (
+            df_filtrado.assign(
+                date=lambda x: pd.to_datetime(
+                    x["ano"].astype(str)
+                    + "-"
+                    + x["mes"].astype(str).str.zfill(2)
+                    + "-01"
+                ),
+                exp_milhoes=lambda x: x["total_exp_mensal"] / 1_000_000,
+            )
+            .pivot_table(
+                index="date",
+                columns="municipio",
+                values="exp_milhoes",
+                aggfunc="sum",
+                fill_value=0,
+            )
+            .sort_index()
+            .apply(lambda x: x.round(2))
+        )
+
+        # Mês Atual
+        df_comex_mes = (
+            df_filtrado[df_filtrado["mes"] == ult_mes_comex]
+            .assign(exp_milhoes=lambda x: x["total_exp_mensal"] / 1_000_000)
+            .pivot_table(
+                index="ano",
+                columns="municipio",
+                values="exp_milhoes",
+                aggfunc="sum",
+                fill_value=0,
+            )
+            .sort_index()
+            .apply(lambda x: x.round(2))
+        )
+
+        # Acumulado no Ano
+        df_comex_acum = (
+            df_filtrado[df_filtrado["mes"] <= ult_mes_comex]
+            .assign(exp_milhoes=lambda x: x["total_exp_acumulado"] / 1_000_000)
+            .pivot_table(
+                index="ano",
+                columns="municipio",
+                values="exp_milhoes",
+                aggfunc="sum",
+                fill_value=0,
+            )
+            .sort_index()
+        )
+
+        # Anual
+        ano_completo_comex = checar_ult_ano_completo(df_filtrado)
+        df_comex_ano = (
+            df_filtrado[df_filtrado["ano"] <= ano_completo_comex]
+            .assign(exp_milhoes=lambda x: x["total_exp_mensal"] / 1_000_000)
+            .pivot_table(
+                index="ano",
+                columns="municipio",
+                values="exp_milhoes",
+                aggfunc="sum",
+                fill_value=0,
+            )
+            .sort_index()
+        )
+
+    return (
+        df_comex_hist,
+        df_comex_mes,
+        df_comex_acum,
+        df_comex_ano,
+        ult_ano_comex,
+        ult_mes_comex,
+    )
+
+
 def display_comex_municipios_expander(
     df_mes, municipio_interesse, municipios_interesse
 ):
@@ -394,6 +515,16 @@ def display_comex_municipios_expander(
                 & df_mes["ano"].isin(anos_de_interesse)
             )
         ]
+
+        (
+            df_comex_hist,
+            df_comex_mes,
+            df_comex_acum,
+            df_comex_ano,
+            ult_ano_comex,
+            ult_mes_comex,
+        ) = prepara_dados_graficos_comex(df_filtrado, anos_de_interesse)
+
         anos_disponiveis = sorted(df_filtrado["ano"].unique().tolist(), reverse=True)
 
         with tab_hist:
@@ -403,32 +534,14 @@ def display_comex_municipios_expander(
                 index=0,
                 key="hist_ano_comex",
             )
-            df_comex_hist = df_filtrado[df_filtrado["ano"] == ANO_SELECIONADO]
+            df_comex_hist_filtrado_ano = df_comex_hist[
+                df_comex_hist.index.year == ANO_SELECIONADO
+            ]
             if not ANO_SELECIONADO:
                 st.warning("Por favor, selecione ao menos um ano.")
-            df_comex_hist = (
-                df_comex_hist.assign(
-                    date=lambda x: pd.to_datetime(
-                        x["ano"].astype(str)
-                        + "-"
-                        + x["mes"].astype(str).str.zfill(2)
-                        + "-01"
-                    ),
-                    exp_milhoes=lambda x: x["total_exp_mensal"] / 1_000_000,
-                )
-                .pivot_table(
-                    index="date",
-                    columns="municipio",
-                    values="exp_milhoes",
-                    aggfunc="sum",
-                    fill_value=0,
-                )
-                .sort_index()
-                .apply(lambda x: x.round(2))
-            )
 
             fig_hist = criar_grafico_barras(
-                df=df_comex_hist,
+                df=df_comex_hist_filtrado_ano,
                 titulo=f"Exportações em {ANO_SELECIONADO}",
                 label_y="(Milhões de US$)",
                 barmode="group",
@@ -439,28 +552,14 @@ def display_comex_municipios_expander(
             st.plotly_chart(fig_hist, width="stretch")
 
         with tab_mes:
-            ult_ano = df_filtrado["ano"].max()
-            ult_mes = df_filtrado[df_filtrado["ano"] == ult_ano]["mes"].max()
-            df_comex_mes = (
-                df_filtrado[df_filtrado["mes"] == ult_mes]
-                .assign(exp_milhoes=lambda x: x["total_exp_mensal"] / 1_000_000)
-                .pivot_table(
-                    index="ano",
-                    columns="municipio",
-                    values="exp_milhoes",
-                    aggfunc="sum",
-                    fill_value=0,
-                )
-                .sort_index()
-                .apply(lambda x: x.round(2))
-            )
-            nome_mes = MESES_DIC[ult_mes]
+            nome_mes = MESES_DIC[ult_mes_comex]
+
             df_comex_mes.index = (
                 nome_mes + "/" + df_comex_mes.index.astype(str).str.slice(-2)
             )
             fig_mes = criar_grafico_barras(
                 df=df_comex_mes,
-                titulo=f"Exportações em {MESES_DIC[ult_mes]}",
+                titulo=f"Exportações em {MESES_DIC[ult_mes_comex]}",
                 label_y="(Milhões de US$)",
                 barmode="group",
                 height=500,
@@ -470,27 +569,15 @@ def display_comex_municipios_expander(
             st.plotly_chart(fig_mes, width="stretch")
 
         with tab_acum:
-            df_acum = (
-                df_filtrado[df_filtrado["mes"] == ult_mes]
-                .assign(exp_milhoes=lambda x: x["total_exp_acumulado"] / 1_000_000)
-                .pivot_table(
-                    index="ano",
-                    columns="municipio",
-                    values="exp_milhoes",
-                    aggfunc="sum",
-                    fill_value=0,
-                )
-                .sort_index()
-            )
-            df_acum.index = (
+            df_comex_acum.index = (
                 "Jan-"
-                + MESES_DIC[ult_mes][:3]
+                + MESES_DIC[ult_mes_comex][:3]
                 + "/"
-                + df_acum.index.astype(str).str.slice(-2)
+                + df_comex_acum.index.astype(str).str.slice(-2)
             )
             fig_acum = criar_grafico_barras(
-                df=df_acum,
-                titulo=f"Exportações de Janeiro a {MESES_DIC[ult_mes]}",
+                df=df_comex_acum,
+                titulo=f"Exportações de Janeiro a {MESES_DIC[ult_mes_comex]}",
                 label_y="(Milhões de US$)",
                 barmode="group",
                 height=500,
@@ -500,19 +587,6 @@ def display_comex_municipios_expander(
             st.plotly_chart(fig_acum, width="stretch")
 
         with tab_anual:
-            ano_completo = checar_ult_ano_completo(df_filtrado)
-            df_comex_ano = (
-                df_filtrado[df_filtrado["ano"] <= ano_completo]
-                .assign(exp_milhoes=lambda x: x["total_exp_mensal"] / 1_000_000)
-                .pivot_table(
-                    index="ano",
-                    columns="municipio",
-                    values="exp_milhoes",
-                    aggfunc="sum",
-                    fill_value=0,
-                )
-                .sort_index(ascending=False)
-            )
             fig_anual = criar_grafico_barras(
                 df=df_comex_ano,
                 titulo="Exportações Anuais",
@@ -525,12 +599,87 @@ def display_comex_municipios_expander(
             st.plotly_chart(fig_anual, width="stretch")
 
 
+@st.cache_data
+def preparar_dados_comex_produto_pais(df, anos_selecionados, tipo_agg):
+    """
+    Função cacheada e genérica para preparar os dados para as abas de Comex.
+    'tipo_agg' pode ser 'pais', 'produto', ou 'pais_produto'.
+    """
+    if not anos_selecionados:
+        return pd.DataFrame()
+
+    df_filtrado = df[df["ano"].isin(anos_selecionados)]
+
+    if tipo_agg == "pais":
+        return criar_tabela_comex(df_filtrado, ["pais"], ["País"], anos_selecionados)
+
+    if tipo_agg == "produto":
+        return criar_tabela_comex(
+            df_filtrado, ["produto"], ["Produto"], anos_selecionados
+        )
+
+    if tipo_agg == "pais_produto":
+        return criar_tabela_comex(
+            df_filtrado, ["pais", "produto"], ["País", "Produto"], anos_selecionados
+        )
+
+    return pd.DataFrame()
+
+
+@st.cache_data
+def preparar_grafico_comex(df_filtrado_exibicao):
+    """
+    Recebe o DataFrame já filtrado pela UI e retorna a figura do gráfico cacheada.
+    """
+    if df_filtrado_exibicao.empty:
+        return None
+
+    df_grafico = (
+        df_filtrado_exibicao.assign(
+            date=lambda x: pd.to_datetime(
+                x["Ano"].astype(str) + "-" + x["Mês"].astype(str).str.zfill(2) + "-01"
+            )
+        )
+        .pivot_table(
+            index="date",
+            columns=["País"],
+            values="Valor Exportado no Mês (US$)",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .sort_index()
+    )
+    if not df_grafico.empty:
+        df_grafico.index = df_grafico.index.strftime("%Y-%m")
+
+    return criar_grafico_barras(
+        df=df_grafico,
+        titulo="Exportações Mensais",
+        label_y="Valor Exportado (US$)",
+        barmode="stack",
+        height=500,
+        data_label_format=",.0f",
+        hover_label_format=",.0f",
+    )
+
+
 def display_comex_produto_pais_expander(df, municipio_interesse):
     """Exibe o expander com análise de exportações por Produto e País do Municipio Selecionado."""
     with st.expander(
         f"Comércio Exterior de {municipio_interesse} por Destino e Produto",
         expanded=False,
     ):
+        anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
+        ANOS_SELECIONADOS = st.multiselect(
+            "Selecione o(s) ano(s) para a tabela:",
+            options=anos_disponiveis,
+            default=anos_de_interesse[-1],
+            key="anos_comex_pais_multiselect",
+        )
+
+        if not ANOS_SELECIONADOS:
+            st.warning("Por favor, selecione ao menos um ano.")
+
         tab_pais, tab_produto, tab_pais_produto = st.tabs(
             ["País", "Produto", "País - Produto"],
         )
@@ -543,22 +692,10 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
         }
 
         with tab_pais:
-            anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
-            ANOS_SELECIONADOS = st.multiselect(
-                "Selecione o(s) ano(s) para a tabela:",
-                options=anos_disponiveis,
-                default=anos_de_interesse[-1],
-                key="anos_comex_pais_multiselect",
-            )
-            df_comex_pais = df[df["ano"].isin(ANOS_SELECIONADOS)]
-            if not ANOS_SELECIONADOS:
-                st.warning("Por favor, selecione ao menos um ano.")
-
-            df_comex_pais = criar_tabela_comex(
-                df=df_comex_pais,
-                colunas_agg=["pais"],
-                colunas_finais=["País"],
-                anos_selecionados=anos_de_interesse,
+            df_comex_pais = preparar_dados_comex_produto_pais(
+                df=df,
+                anos_selecionados=ANOS_SELECIONADOS,
+                tipo_agg="pais",
             )
 
             paises_options = sorted(df_comex_pais["País"].unique().tolist())
@@ -569,35 +706,24 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
                 key="filtro_tabela_comex_pais",
             )
 
-            df_comex_pais_exibir = df_comex_pais.copy()
-            if paises_selecionados_filtro:
-                df_comex_pais_exibir = df_comex_pais_exibir[
-                    df_comex_pais_exibir["País"].isin(paises_selecionados_filtro)
-                ]
+            df_comex_pais_exibir = (
+                df_comex_pais[df_comex_pais["País"].isin(paises_selecionados_filtro)]
+                if paises_selecionados_filtro
+                else df_comex_pais
+            )
 
-            styled_df_pais = df_comex_pais_exibir.style.map(
-                destacar_percentuais,
-                subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
-            ).format(format_dict)
-
-            st.dataframe(styled_df_pais, hide_index=True, use_container_width=True)
+            st.dataframe(
+                df_comex_pais_exibir.style.map(
+                    destacar_percentuais,
+                    subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
+                ).format(format_dict),
+                hide_index=True,
+                width="stretch",
+            )
 
         with tab_produto:
-            anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
-            ANOS_SELECIONADOS = st.multiselect(
-                "Selecione o(s) ano(s) para a tabela:",
-                options=anos_disponiveis,
-                default=anos_de_interesse[-1],
-                key="anos_comex_produto_multiselect",
-            )
-            df_comex_produto = df[df["ano"].isin(ANOS_SELECIONADOS)]
-            if not ANOS_SELECIONADOS:
-                st.warning("Por favor, selecione ao menos um ano.")
-            df_comex_produto = criar_tabela_comex(
-                df=df_comex_produto,
-                colunas_agg=["produto"],
-                colunas_finais=["Produto"],
-                anos_selecionados=anos_de_interesse,
+            df_comex_produto = preparar_dados_comex_produto_pais(
+                df=df, anos_selecionados=ANOS_SELECIONADOS, tipo_agg="produto"
             )
 
             produtos_options = sorted(df_comex_produto["Produto"].unique().tolist())
@@ -607,37 +733,26 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
                 options=produtos_options,
                 key="filtro_tabela_comex_produto",
             )
-
-            df_comex_produto_exibir = df_comex_produto.copy()
-            if produtos_selecionados_filtro:
-                df_comex_produto_exibir = df_comex_produto_exibir[
-                    df_comex_produto_exibir["Produto"].isin(
-                        produtos_selecionados_filtro
-                    )
+            df_comex_produto_exibir = (
+                df_comex_produto[
+                    df_comex_produto["Produto"].isin(produtos_selecionados_filtro)
                 ]
+                if produtos_selecionados_filtro
+                else df_comex_produto
+            )
 
-            styled_df_produto = df_comex_produto_exibir.style.map(
-                destacar_percentuais,
-                subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
-            ).format(format_dict)
-
-            st.dataframe(styled_df_produto, hide_index=True, use_container_width=True)
+            st.dataframe(
+                df_comex_produto_exibir.style.map(
+                    destacar_percentuais,
+                    subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
+                ).format(format_dict),
+                hide_index=True,
+                width="stretch",
+            )
 
         with tab_pais_produto:
-            anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
-            ANOS_SELECIONADOS = st.multiselect(
-                "Selecione o(s) ano(s) para a tabela:",
-                options=anos_disponiveis,
-                default=anos_de_interesse[-1],
-                key="anos_comex_pais_produto_multiselect",
-            )
-            df_filtrado_anos_pais_produto = df[df["ano"].isin(ANOS_SELECIONADOS)]
-
-            df_comex_pais_produto = criar_tabela_comex(
-                df=df_filtrado_anos_pais_produto,
-                colunas_agg=["pais", "produto"],
-                colunas_finais=["País", "Produto"],
-                anos_selecionados=ANOS_SELECIONADOS,
+            df_comex_pais_produto = preparar_dados_comex_produto_pais(
+                df=df, anos_selecionados=ANOS_SELECIONADOS, tipo_agg="pais_produto"
             )
 
             paises_options = sorted(df_comex_pais_produto["País"].unique().tolist())
@@ -684,44 +799,29 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
                     df_pais_produto_exibir["Produto"].isin(produtos_selecionados)
                 ]
 
-                styled_df = df_pais_produto_exibir.style.map(
-                    destacar_percentuais,
-                    subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
-                ).format(format_dict)
+            styled_df = df_pais_produto_exibir.style.map(
+                destacar_percentuais,
+                subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
+            ).format(format_dict)
+
+            fig_pp = preparar_grafico_comex(df_pais_produto_exibir)
+
+            view_mode = st.radio(
+                "Selecione o modo de Visualização:",
+                options=["Tabela", "Gráfico"],
+                horizontal=True,
+                label_visibility="collapsed",
+                key="view_mode_comex_pp",
+            )
+
+            if view_mode == "Tabela":
                 st.dataframe(styled_df, hide_index=True, width="stretch")
 
-                df_grafico = (
-                    df_pais_produto_exibir.assign(
-                        date=lambda x: pd.to_datetime(
-                            x["Ano"].astype(str)
-                            + "-"
-                            + x["Mês"].astype(str).str.zfill(2)
-                            + "-01"
-                        )
-                    )
-                    .pivot_table(
-                        index="date",
-                        columns=["País"],
-                        values="Valor Exportado no Mês (US$)",
-                        aggfunc="sum",
-                        fill_value=0,
-                    )
-                    .sort_index()
-                )
-
-                if not df_grafico.empty:
-                    df_grafico.index = df_grafico.index.strftime("%Y - %m")
-
-                fig_hist = criar_grafico_barras(
-                    df=df_grafico,
-                    titulo="Exportações Mensais",
-                    label_y="Valor Exportado (US$)",
-                    barmode="stack",
-                    height=500,
-                    data_label_format=",.0f",
-                    hover_label_format=",.0f",
-                )
-                st.plotly_chart(fig_hist, use_container_width=True)
+            elif view_mode == "Gráfico":
+                if fig_pp:
+                    st.plotly_chart(fig_pp, use_container_width=True)
+                else:
+                    st.warning("Nenhum dado disponível para o gráfico.")
 
 
 def show_page_comex(

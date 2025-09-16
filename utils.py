@@ -1,6 +1,7 @@
 import plotly.express as px
 import streamlit as st
 import pandas as pd
+import numpy as np
 
 # --- DICIONÁRIOS E CONSTANTES ---
 
@@ -181,6 +182,7 @@ def criar_grafico_barras(
     return fig
 
 
+@st.cache_data
 def criar_tabela_formatada(df, index_col, ult_ano, ult_mes):
     """Cria uma tabela formatada para exibição no Streamlit."""
     df_filtrado = df[df["mes"] <= ult_mes]
@@ -209,6 +211,7 @@ def destacar_percentuais(val):
     return f"color: {color}"
 
 
+@st.cache_data
 def criar_tabela_comex(df, colunas_agg, colunas_finais, anos_selecionados):
     """
     Cria uma tabela de dados de comércio exterior, agrupando por uma ou mais colunas.
@@ -273,6 +276,6 @@ def criar_tabela_comex(df, colunas_agg, colunas_finais, anos_selecionados):
             by=["ano", "mes", "valor_exp_mensal"], ascending=[False, False, False]
         )
         .query("ano in @anos_selecionados")
-        .replace([float("inf"), float("-inf"), float("nan")])[colunas_originais]
+        .replace([np.inf, -np.inf], np.nan)[colunas_originais]
         .set_axis(colunas_resultado, axis=1)
     )
