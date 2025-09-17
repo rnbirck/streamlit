@@ -187,6 +187,7 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
             options=municipios_interesse,
             default=municipio_interesse,
             key="emprego_municipios_multiselect",
+            on_change=expander_emprego_callback,
         )
 
         if not municipios_selecionados:
