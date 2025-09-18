@@ -1,6 +1,7 @@
 # %%
 import streamlit as st
 import pandas as pd
+import numpy as np
 from streamlit_option_menu import option_menu
 
 # ==============================================================================
@@ -23,6 +24,7 @@ from data_loader import (
     carregar_dados_emprego_cnae,
     carregar_dados_comex_anual,
     carregar_dados_comex_municipio,
+    carregar_dados_siconfi_rreo,
 )
 
 # ==============================================================================
@@ -925,6 +927,8 @@ df_comex_mensal = carregar_dados_comex_mensal(
 df_comex_municipio = carregar_dados_comex_municipio(
     municipio=municipio_de_interesse, anos=anos_comex
 )
+
+df_siconfi_rreo = carregar_dados_siconfi_rreo()
 # ==============================================================================
 # BARRA LATERAL E NAVEGAÇÃO ENTRE PÁGINAS
 # ==============================================================================
@@ -932,8 +936,8 @@ df_comex_municipio = carregar_dados_comex_municipio(
 with st.sidebar:
     pagina_selecionada = option_menu(
         menu_title="Menu",
-        options=["Emprego", "Comércio Exterior"],
-        icons=["briefcase-fill", "globe2"],
+        options=["Emprego", "Comércio Exterior", "Finanças"],
+        icons=["briefcase-fill", "globe2", "bar-chart-fill"],
         menu_icon="cast",
         default_index=0,
     )
@@ -954,6 +958,183 @@ elif pagina_selecionada == "Comércio Exterior":
         df_comex_ano, df_comex_mensal, municipio_de_interesse, municipios_de_interesse
     )
 
+elif pagina_selecionada == "Finanças":
+    st.title("Dashboard de Finanças Públicas")
 
+    df_siconfi_receitas_correntes_mun = (
+        df_siconfi_rreo[
+            (df_siconfi_rreo["municipio"] == municipio_de_interesse)
+            & (df_siconfi_rreo["cod_conta"] == "ReceitasCorrentes")
+        ]
+        .sort_values(by=["municipio", "coluna", "periodo", "exercicio"])
+        .assign(
+            valor_milhoes=lambda x: x["valor"] / 1000000,
+            valor_ano_anterior=lambda x: x.groupby(["municipio", "coluna", "periodo"])[
+                "valor"
+            ].shift(1),
+        )
+        .pipe(
+            lambda x: x.assign(
+                variacao_yoy=lambda x: np.where(
+                    x["valor_ano_anterior"].notna() & x["valor_ano_anterior"] != 0,
+                    (x["valor"] / x["valor_ano_anterior"] - 1) * 100,
+                    np.nan,
+                )
+            )
+        )
+    )
+
+    df_siconfi_receitas_correntes_mun_bimestre = (
+        df_siconfi_receitas_correntes_mun.query(
+            "coluna == 'No Bimestre (b)'"
+        ).pivot_table(
+            index=["exercicio", "periodo"],
+            columns="municipio",
+            values="valor_milhoes",
+            aggfunc="sum",
+            fill_value=0,
+        )
+    )
+
+    df_siconfi_receitas_correntes_mun_bimestre.index = (
+        df_siconfi_receitas_correntes_mun_bimestre.index.get_level_values("periodo")
+        .astype(str)
+        .str.zfill(2)
+        + "-"
+        + df_siconfi_receitas_correntes_mun_bimestre.index.get_level_values("exercicio")
+        .astype(str)
+        .str.slice(-2)
+    )
+
+    fig_receitas_correntes = criar_grafico_barras(
+        df=df_siconfi_receitas_correntes_mun_bimestre,
+        titulo=f"Receitas Correntes de {municipio_de_interesse} no Bimestre (Milhões R$)",
+        label_y="Receitas Correntes (Milhões R$)",
+        barmode="group",
+        height=500,
+        data_label_format=".1f",
+        hover_label_format=",.2f",
+    )
+
+    df_siconfi_receitas_correntes_mun_acum = df_siconfi_receitas_correntes_mun.query(
+        "coluna == 'Até o Bimestre (c)'"
+    ).pivot_table(
+        index=["exercicio", "periodo"],
+        columns="municipio",
+        values="valor_milhoes",
+        aggfunc="sum",
+        fill_value=0,
+    )
+    df_siconfi_receitas_correntes_mun_acum.index = (
+        df_siconfi_receitas_correntes_mun_acum.index.get_level_values("periodo")
+        .astype(str)
+        .str.zfill(2)
+        + "-"
+        + df_siconfi_receitas_correntes_mun_acum.index.get_level_values("exercicio")
+        .astype(str)
+        .str.slice(-2)
+    )
+    fig_receitas_correntes_acum = criar_grafico_barras(
+        df=df_siconfi_receitas_correntes_mun_acum,
+        titulo=f"Receitas Correntes Acumuladas até o Bimestre de {municipio_de_interesse} (Milhões R$)",
+        label_y="Receitas Correntes Acumuladas (Milhões R$)",
+        barmode="group",
+        height=500,
+        data_label_format=".1f",
+        hover_label_format=",.2f",
+    )
+
+    st.markdown("#### Análise de Receitas Correntes (Milhões R$)")
+
+    view_mode = st.radio(
+        "Selecione o modo de Visualização:",
+        options=["No bimestre", "Até o bimestre"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="view_mode_siconfi_receitas_correntes_mun",
+    )
+    if view_mode == "No bimestre":
+        st.plotly_chart(fig_receitas_correntes, width="stretch")
+
+    elif view_mode == "Até o bimestre":
+        if fig_receitas_correntes_acum:
+            st.plotly_chart(fig_receitas_correntes_acum, width="stretch")
+        else:
+            st.warning("Nenhum dado disponível para o gráfico.")
+
+    df_siconfi_receitas_correntes_mun_yoy = df_siconfi_receitas_correntes_mun.query(
+        "coluna == 'No Bimestre (b)'"
+    ).pivot_table(
+        index=["exercicio", "periodo"],
+        columns="municipio",
+        values="variacao_yoy",
+        aggfunc="mean",
+        fill_value=0,
+    )
+    df_siconfi_receitas_correntes_mun_yoy.index = (
+        df_siconfi_receitas_correntes_mun_yoy.index.get_level_values("periodo")
+        .astype(str)
+        .str.zfill(2)
+        + "-"
+        + df_siconfi_receitas_correntes_mun_yoy.index.get_level_values("exercicio")
+        .astype(str)
+        .str.slice(-2)
+    )
+    fig_receitas_correntes_yoy = criar_grafico_barras(
+        df=df_siconfi_receitas_correntes_mun_yoy,
+        titulo=f"Receitas Correntes no Bimestre de {municipio_de_interesse} (Variação Anual %)",
+        label_y="Variação Anual (%)",
+        barmode="group",
+        height=500,
+        data_label_format=".1f",
+        hover_label_format=",.2f",
+    )
+
+    df_siconfi_receitas_correntes_mun_acum_yoy = (
+        df_siconfi_receitas_correntes_mun.query(
+            "coluna == 'Até o Bimestre (c)'"
+        ).pivot_table(
+            index=["exercicio", "periodo"],
+            columns="municipio",
+            values="variacao_yoy",
+            aggfunc="mean",
+            fill_value=0,
+        )
+    )
+    df_siconfi_receitas_correntes_mun_acum_yoy.index = (
+        df_siconfi_receitas_correntes_mun_acum_yoy.index.get_level_values("periodo")
+        .astype(str)
+        .str.zfill(2)
+        + "-"
+        + df_siconfi_receitas_correntes_mun_acum_yoy.index.get_level_values("exercicio")
+        .astype(str)
+        .str.slice(-2)
+    )
+    fig_receitas_correntes_acum_yoy = criar_grafico_barras(
+        df=df_siconfi_receitas_correntes_mun_acum_yoy,
+        titulo=f"Receitas Correntes Acumuladas até o Bimestre de {municipio_de_interesse} (Variação Anual %)",
+        label_y="Variação Anual (%)",
+        barmode="group",
+        height=500,
+        data_label_format=".1f",
+        hover_label_format=",.2f",
+    )
+
+    st.markdown("#### Variação YoY das Receitas Correntes (%)")
+
+    view_mode = st.radio(
+        "Selecione o modo de Visualização:",
+        options=["No bimestre", "Até o bimestre"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="view_mode_siconfi_receitas_correntes_yoy_mun",
+    )
+    if view_mode == "No bimestre":
+        st.plotly_chart(fig_receitas_correntes_yoy, width="stretch")
+
+    elif view_mode == "Até o bimestre":
+        if fig_receitas_correntes_acum:
+            st.plotly_chart(fig_receitas_correntes_acum_yoy, width="stretch")
+        else:
+            st.warning("Nenhum dado disponível para o gráfico.")
 manter_posicao_scroll()
-# %%
