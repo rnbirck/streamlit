@@ -221,7 +221,7 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
                 titulo=f"Saldo de Emprego Mensal em {ANO_SELECIONADO}",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
             )
@@ -233,7 +233,7 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
                 titulo=f"Saldo Mensal de Emprego em {MESES_DIC[ult_mes]}",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
             )
@@ -245,7 +245,7 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
                 titulo=f"Saldo Acumulado de Emprego de Janeiro a {MESES_DIC[ult_mes]}",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
             )
@@ -257,7 +257,7 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
                 titulo="Saldo Anual de Emprego",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
             )
@@ -283,7 +283,7 @@ def display_emprego_cnae_expander(df, ult_ano, ult_mes):
                 titulo=f"Saldo Acumulado de Admissões e Demissões por Setor Econômico - {municipio_de_interesse}",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
             )
@@ -576,7 +576,7 @@ def display_comex_municipios_expander(
                 titulo=f"Exportações em {ANO_SELECIONADO}",
                 label_y="(Milhões de US$)",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
             )
@@ -586,7 +586,7 @@ def display_comex_municipios_expander(
                 titulo=f"Variação Percentual das Exportações em {ANO_SELECIONADO}",
                 label_y="Variação em relação ao mesmo mês do ano anterior (%)",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
             )
@@ -619,7 +619,7 @@ def display_comex_municipios_expander(
                 titulo=f"Exportações em {MESES_DIC[ult_mes_comex]}",
                 label_y="(Milhões de US$)",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
             )
@@ -637,7 +637,7 @@ def display_comex_municipios_expander(
                 titulo=f"Exportações de Janeiro a {MESES_DIC[ult_mes_comex]}",
                 label_y="(Milhões de US$)",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
             )
@@ -649,7 +649,7 @@ def display_comex_municipios_expander(
                 titulo="Exportações Anuais",
                 label_y="(Milhões de US$)",
                 barmode="group",
-                height=500,
+                height=400,
                 data_label_format=",.1f",
                 hover_label_format=",.2f",
             )
@@ -714,7 +714,7 @@ def preparar_grafico_comex(df_filtrado_exibicao):
         titulo="Exportações Mensais",
         label_y="Valor Exportado (US$)",
         barmode="stack",
-        height=500,
+        height=400,
         data_label_format=",.0f",
         hover_label_format=",.0f",
     )
