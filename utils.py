@@ -152,7 +152,7 @@ def criar_grafico_barras(
         xaxis_config = dict(tickmode="linear", dtick=1)
 
     fig.update_layout(
-        margin=dict(t=120),
+        margin=dict(t=50),
         title_text=titulo,
         title_font_size=20,
         xaxis_title="",

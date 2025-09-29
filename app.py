@@ -215,10 +215,11 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
             )
 
             df_hist = df_hist[df_hist.index.year == ANO_SELECIONADO]
+            st.markdown(f"##### Saldo de Emprego Mensal em {ANO_SELECIONADO}")
 
             fig_hist = criar_grafico_barras(
                 df=df_hist,
-                titulo=f"Saldo de Emprego Mensal em {ANO_SELECIONADO}",
+                titulo="",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
                 height=450,
@@ -228,9 +229,10 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
             st.plotly_chart(fig_hist, width="stretch")
 
         with tab_mes:
+            st.markdown(f"##### Saldo Mensal de Emprego em {MESES_DIC[ult_mes]}")
             fig_mes = criar_grafico_barras(
                 df=df_mes,
-                titulo=f"Saldo Mensal de Emprego em {MESES_DIC[ult_mes]}",
+                titulo="",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
                 height=450,
@@ -240,9 +242,12 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
             st.plotly_chart(fig_mes, width="stretch")
 
         with tab_acum:
+            st.markdown(
+                f"##### Saldo Acumulado de Emprego de Janeiro a {MESES_DIC[ult_mes]}",
+            )
             fig_acum = criar_grafico_barras(
                 df=df_acum,
-                titulo=f"Saldo Acumulado de Emprego de Janeiro a {MESES_DIC[ult_mes]}",
+                titulo="",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
                 height=450,
@@ -252,9 +257,12 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
             st.plotly_chart(fig_acum, width="stretch")
 
         with tab_anual:
+            st.markdown(
+                "##### Saldo Anual de Emprego",
+            )
             fig_anual = criar_grafico_barras(
                 df=df_anual,
-                titulo="Saldo Anual de Emprego",
+                titulo="",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
                 height=450,
@@ -277,10 +285,13 @@ def display_emprego_cnae_expander(df, ult_ano, ult_mes):
             df_tabela_grupo_ibge = criar_tabela_formatada(
                 df=df, index_col="grupo_ibge", ult_ano=ult_ano, ult_mes=ult_mes
             )
+            st.markdown(
+                f"##### Saldo Acumulado de Admissões e Demissões por Setor Econômico - {municipio_de_interesse}"
+            )
 
             fig_grupo_ibge = criar_grafico_barras(
                 df=df_tabela_grupo_ibge.T,
-                titulo=f"Saldo Acumulado de Admissões e Demissões por Setor Econômico - {municipio_de_interesse}",
+                titulo="",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
                 height=450,
@@ -573,7 +584,7 @@ def display_comex_municipios_expander(
 
             fig_hist = criar_grafico_barras(
                 df=df_comex_hist_filtrado_ano,
-                titulo=f"Exportações em {ANO_SELECIONADO}",
+                titulo="",
                 label_y="(Milhões de US$)",
                 barmode="group",
                 height=450,
@@ -583,7 +594,7 @@ def display_comex_municipios_expander(
 
             fig_hist_perc = criar_grafico_barras(
                 df=df_comex_hist_perc_filtrado_ano,
-                titulo=f"Variação Percentual das Exportações em {ANO_SELECIONADO}",
+                titulo="",
                 label_y="Variação em relação ao mesmo mês do ano anterior (%)",
                 barmode="group",
                 height=450,
@@ -600,10 +611,14 @@ def display_comex_municipios_expander(
             )
 
             if view_mode == "Valor (Milhões de US$)":
+                st.markdown(f"##### Exportações em {ANO_SELECIONADO}")
                 st.plotly_chart(fig_hist, width="stretch")
 
             elif view_mode == "Variação YoY (%)":
                 if fig_hist_perc:
+                    st.markdown(
+                        f"##### Variação Percentual das Exportações em {ANO_SELECIONADO}"
+                    )
                     st.plotly_chart(fig_hist_perc, use_container_width=True)
                 else:
                     st.warning("Nenhum dado disponível para o gráfico.")
@@ -616,13 +631,14 @@ def display_comex_municipios_expander(
             )
             fig_mes = criar_grafico_barras(
                 df=df_comex_mes,
-                titulo=f"Exportações em {MESES_DIC[ult_mes_comex]}",
+                titulo="",
                 label_y="(Milhões de US$)",
                 barmode="group",
                 height=450,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
             )
+            st.markdown(f"##### Exportações em {MESES_DIC[ult_mes_comex]}")
             st.plotly_chart(fig_mes, width="stretch")
 
         with tab_acum:
@@ -634,25 +650,27 @@ def display_comex_municipios_expander(
             )
             fig_acum = criar_grafico_barras(
                 df=df_comex_acum,
-                titulo=f"Exportações de Janeiro a {MESES_DIC[ult_mes_comex]}",
+                titulo="",
                 label_y="(Milhões de US$)",
                 barmode="group",
                 height=450,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
             )
+            st.markdown(f"##### Exportações de Janeiro a {MESES_DIC[ult_mes_comex]}")
             st.plotly_chart(fig_acum, width="stretch")
 
         with tab_anual:
             fig_anual = criar_grafico_barras(
                 df=df_comex_ano,
-                titulo="Exportações Anuais",
+                titulo="",
                 label_y="(Milhões de US$)",
                 barmode="group",
                 height=450,
                 data_label_format=",.1f",
                 hover_label_format=",.2f",
             )
+            st.markdown("##### Exportações Anuais")
             st.plotly_chart(fig_anual, width="stretch")
 
 
@@ -711,7 +729,7 @@ def preparar_grafico_comex(df_filtrado_exibicao):
 
     return criar_grafico_barras(
         df=df_grafico,
-        titulo="Exportações Mensais",
+        titulo="",
         label_y="Valor Exportado (US$)",
         barmode="stack",
         height=450,
@@ -876,6 +894,7 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
 
             elif view_mode == "Gráfico":
                 if fig_pp:
+                    st.markdown("##### Exportações Anuais")
                     st.plotly_chart(fig_pp, use_container_width=True)
                 else:
                     st.warning("Nenhum dado disponível para o gráfico.")
@@ -954,7 +973,7 @@ def display_expander_siconfi(df, municipio_de_interesse, cod_conta, conta, expan
 
         fig_siconfi = criar_grafico_barras(
             df=df_siconfi_mun_bimestre,
-            titulo=f"{conta} de {municipio_de_interesse} no Bimestre (Milhões R$)",
+            titulo="",
             label_y=f"{conta} (Milhões R$)",
             barmode="group",
             height=450,
@@ -980,9 +999,10 @@ def display_expander_siconfi(df, municipio_de_interesse, cod_conta, conta, expan
             .astype(str)
             .str.slice(-2)
         )
+
         fig_siconfi_acum = criar_grafico_barras(
             df=df_siconfi_mun_acum,
-            titulo=f"{conta} Acumuladas até o Bimestre de {municipio_de_interesse} (Milhões R$)",
+            titulo="",
             label_y=f"{conta} Acumuladas (Milhões R$)",
             barmode="group",
             height=450,
@@ -1008,9 +1028,10 @@ def display_expander_siconfi(df, municipio_de_interesse, cod_conta, conta, expan
             .astype(str)
             .str.slice(-2)
         )
+
         fig_siconfi_yoy = criar_grafico_barras(
             df=df_siconfi_mun_yoy,
-            titulo=f"{conta} no Bimestre de {municipio_de_interesse} (Variação Anual %)",
+            titulo="",
             label_y="Variação Anual (%)",
             barmode="group",
             height=450,
@@ -1036,9 +1057,10 @@ def display_expander_siconfi(df, municipio_de_interesse, cod_conta, conta, expan
             .astype(str)
             .str.slice(-2)
         )
+
         fig_siconfi_acum_yoy = criar_grafico_barras(
             df=df_siconfi_mun_acum_yoy,
-            titulo=f"{conta} Acumuladas até o Bimestre de {municipio_de_interesse} (Variação Anual %)",
+            titulo="",
             label_y="Variação Anual (%)",
             barmode="group",
             height=450,
@@ -1054,12 +1076,24 @@ def display_expander_siconfi(df, municipio_de_interesse, cod_conta, conta, expan
             key=f"view_mode_siconfi_{cod_conta}_yoy_mun",
         )
         if view_mode == "No bimestre":
+            st.markdown(
+                f"##### {conta} de {municipio_de_interesse} no Bimestre (Milhões R$)"
+            )
             st.plotly_chart(fig_siconfi, width="stretch")
+            st.markdown(
+                f"##### {conta} Acumuladas até o Bimestre de {municipio_de_interesse} (Milhões R$)"
+            )
             st.plotly_chart(fig_siconfi_yoy, width="stretch")
 
         elif view_mode == "Até o bimestre":
             if fig_siconfi_acum:
+                st.markdown(
+                    f"##### {conta} no Bimestre de {municipio_de_interesse} (Variação Anual %)"
+                )
                 st.plotly_chart(fig_siconfi_acum, width="stretch")
+                st.markdown(
+                    f"##### {conta} Acumuladas até o Bimestre de {municipio_de_interesse} (Variação Anual %)"
+                )
                 st.plotly_chart(fig_siconfi_acum_yoy, width="stretch")
             else:
                 st.warning("Nenhum dado disponível para o gráfico.")
