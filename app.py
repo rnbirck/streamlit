@@ -7,8 +7,8 @@ from streamlit_option_menu import option_menu
 # ==============================================================================
 # IMPORTAÇÕES DE FUNÇÕES E DADOS
 # ==============================================================================
-from utils import carregar_css
-from utils import (
+from src.utils import carregar_css
+from src.utils import (
     MESES_DIC,
     checar_ult_ano_completo,
     filtrar_municipio_ult_mes_ano,
@@ -18,38 +18,130 @@ from utils import (
     destacar_percentuais,
     criar_tabela_comex,
 )
-from data_loader import (
+from src.data_loader import (
     carregar_dados_comex_mensal,
     carregar_dados_emprego_municipios,
     carregar_dados_emprego_cnae,
     carregar_dados_comex_anual,
     carregar_dados_comex_municipio,
     carregar_dados_siconfi_rreo,
+    carregar_dados_seguranca,
+    carregar_dados_seguranca_taxa,
+)
+from src.config import (
+    municipio_de_interesse,
+    municipios_de_interesse,
+    anos_de_interesse,
+    anos_comex,
+    CORES_MUNICIPIOS,
 )
 
 # ==============================================================================
 # CONFIGURAÇÃO DA PÁGINA
 # ==============================================================================
 st.set_page_config(layout="wide", page_title="Dashboard CEI ", page_icon="📊")
-carregar_css("style.css")
+carregar_css("assets/style.css")
 
 # ==============================================================================
 # INICIALIZAÇÃO DO SESSION STATE
 # ==============================================================================
 if "emprego_expander_state" not in st.session_state:
     st.session_state.emprego_expander_state = False
+
 # ==============================================================================
-# DEFINIÇÕES GERAIS
+# FUNÇÕES DA PÁGINA HOME
 # ==============================================================================
-municipio_de_interesse = "São Leopoldo"
-municipios_de_interesse = [
-    "Porto Alegre",
-    "Canoas",
-    "Novo Hamburgo",
-    "São Leopoldo",
-    "Gravataí",
-]
-anos_de_interesse = range(2021, 2026)
+
+
+def show_page_home():
+    """
+    Renderiza a página inicial do dashboard com instruções e informações.
+    """
+    st.title("📊 Dashboard de Indicadores Municipais")
+    st.markdown("---")
+
+    st.markdown(
+        """
+        Bem-vindo(a) ao painel de visualização de dados! 
+        
+        Este dashboard foi desenvolvido para centralizar e apresentar diversos indicadores socioeconômicos 
+        para os municípios selecionados, permitindo uma análise ágil e comparativa.
+        
+        Utilize as ferramentas de navegação e filtragem para explorar as informações.
+        """
+    )
+
+    st.subheader("🧭 Como Navegar e Filtrar")
+
+    col1, col2 = st.columns(2, gap="large")
+
+    with col1:
+        st.markdown(
+            """
+            #### 1. Navegue pelas Páginas
+            No menu à esquerda, você pode alternar entre as diferentes seções do dashboard:
+            - **Início:** Esta página de boas-vindas.
+            - **Emprego:** Dados do mercado de trabalho formal.
+            - **Comércio Exterior:** Infomações de exportação dos municípios.
+            - **Segurança:** Indicadores de criminalidade.
+            - **Finanças:** Dados fiscais dos municípios.
+            """
+        )
+
+    with col2:
+        st.markdown(
+            """
+            #### 2. Filtre por Municípios
+            Também na barra lateral, no topo, você encontrará o filtro global de municípios. 
+            
+            As cidades que você selecionar aqui serão aplicadas a **todas** as páginas e gráficos 
+            do dashboard, permitindo uma análise comparativa direta e eficiente.
+            """
+        )
+
+    st.markdown("---")
+    st.subheader("📂 Sobre as Páginas e Atualizações")
+
+    col1, col2 = st.columns(2, gap="large")
+
+    with col1:
+        st.markdown(
+            """
+            #### 💼 Emprego
+            Analisa o mercado de trabalho formal através dos dados do **CAGED** (Cadastro Geral de Empregados e Desempregados). Explore o saldo de admissões e demissões e a análise por setor econômico (CNAE).
+            
+            *Frequência de Atualização: **Mensal***
+            """
+        )
+        st.markdown("---")
+        st.markdown(
+            """
+            #### 🛡️ Segurança Pública
+            Reúne os principais indicadores de criminalidade divulgados pela **Secretaria de Segurança Pública**. Os dados são agrupados em categorias como crimes contra a vida, crimes patrimoniais e violência contra a mulher, com visualização em números absolutos e taxas por 100 mil habitantes.
+            
+            *Frequência de Atualização: **Mensal***
+            """
+        )
+
+    with col2:
+        st.markdown(
+            """
+            #### ✈️ Comércio Exterior
+            Apresenta os dados de exportação dos municípios com base nos dados divulgados pelo Comexstat. É possível analisar os valores totais, os principais produtos exportados e os países de destino.
+            
+            *Frequência de Atualização: **Mensal***
+            """
+        )
+        st.markdown("---")
+        st.markdown(
+            """
+            #### 💰 Finanças Públicas
+            Apresenta dados fiscais dos municípios com base nos relatórios do **SICONFI** (Sistema de Informações Contábeis e Fiscais do Setor Público Brasileiro). Explore indicadores como Receitas Correntes e Total de Receitas.
+            
+            *Frequência de Atualização: **Bimestral***
+            """
+        )
+
 
 # ==============================================================================
 # FUNÇÕES DA PÁGINA DE EMPREGO
@@ -178,29 +270,16 @@ def preparar_dados_graficos_emprego(df_filtrado):
     return df_hist, df_mes, df_acum, df_anual, ult_ano, ult_mes
 
 
-def display_emprego_municipios_expander(df, municipios_interesse, municipio_interesse):
+def display_emprego_municipios_expander(df, municipio_interesse):
     """Exibe o expander com análise de saldo de emprego para múltiplos municípios."""
     with st.expander(
         "Saldo de Emprego por Município",
         expanded=st.session_state.emprego_expander_state,
     ):
-        municipios_selecionados = st.multiselect(
-            "Selecione o(s) município(s):",
-            options=municipios_interesse,
-            default=municipio_interesse,
-            key="emprego_municipios_multiselect",
-            on_change=expander_emprego_callback,
-        )
-
-        if not municipios_selecionados:
-            st.warning("Por favor, selecione ao menos um município.")
-            return None
-
-        df_filtrado = df[df["municipio"].isin(municipios_selecionados)]
         df_hist, df_mes, df_acum, df_anual, ult_ano, ult_mes = (
-            preparar_dados_graficos_emprego(df_filtrado)
+            preparar_dados_graficos_emprego(df)
         )
-        anos_disponiveis = sorted(df_filtrado["ano"].unique().tolist(), reverse=True)
+        anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
 
         tab_hist, tab_mes, tab_acum, tab_anual = st.tabs(
             ["Histórico Mensal", "Mês Atual", "Acumulado no Ano", "Anual"],
@@ -225,6 +304,7 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
                 height=450,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
+                color_map=CORES_MUNICIPIOS,
             )
             st.plotly_chart(fig_hist, width="stretch")
 
@@ -238,6 +318,7 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
                 height=450,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
+                color_map=CORES_MUNICIPIOS,
             )
             st.plotly_chart(fig_mes, width="stretch")
 
@@ -253,6 +334,7 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
                 height=450,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
+                color_map=CORES_MUNICIPIOS,
             )
             st.plotly_chart(fig_acum, width="stretch")
 
@@ -268,10 +350,9 @@ def display_emprego_municipios_expander(df, municipios_interesse, municipio_inte
                 height=450,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
+                color_map=CORES_MUNICIPIOS,
             )
             st.plotly_chart(fig_anual, width="stretch")
-
-        return municipios_selecionados
 
 
 def display_emprego_cnae_expander(df, ult_ano, ult_mes):
@@ -297,6 +378,7 @@ def display_emprego_cnae_expander(df, ult_ano, ult_mes):
                 height=450,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
+                color_map=CORES_MUNICIPIOS,
             )
             st.plotly_chart(fig_grupo_ibge, width="stretch")
 
@@ -325,7 +407,6 @@ def show_page_emprego(
     df_caged,
     df_caged_cnae,
     municipio_de_interesse,
-    municipios_de_interesse,
 ):
     """Função principal que renderiza a página de Emprego."""
     st.title("Dashboard de Emprego")
@@ -336,7 +417,6 @@ def show_page_emprego(
 
     display_emprego_municipios_expander(
         df_caged,
-        municipios_de_interesse,
         municipio_de_interesse,
     )
 
@@ -344,6 +424,11 @@ def show_page_emprego(
         ult_ano = int(df_caged_cnae["ano"].max())
         ult_mes = int(df_caged_cnae[df_caged_cnae["ano"] == ult_ano]["mes"].max())
         display_emprego_cnae_expander(df_caged_cnae, ult_ano, ult_mes)
+
+
+# ==============================================================================
+# FUNÇÕES DA PÁGINA DE COMÉRCIO EXTERIOR
+# ==============================================================================
 
 
 def display_comex_kpi_cards(df_ano, df_mes, municipio_interesse):
@@ -527,30 +612,14 @@ def prepara_dados_graficos_comex(df_filtrado, anos_de_interesse):
     )
 
 
-def display_comex_municipios_expander(
-    df_mes, municipio_interesse, municipios_interesse
-):
+def display_comex_municipios_expander(df_mes):
     """Exibe o expander com análise de exportações para múltiplos municípios."""
     with st.expander("Comércio Exterior por Município", expanded=False):
-        municipios_selecionados = st.multiselect(
-            "Selecione o(s) município(s):",
-            options=municipios_interesse,
-            default=municipio_interesse,
-            key="comex_municipios_multiselect",
-        )
-        if not municipios_selecionados:
-            st.warning("Por favor, selecione ao menos um município.")
-
         tab_hist, tab_mes, tab_acum, tab_anual = st.tabs(
             ["Histórico Mensal", "Mês Atual", "Acumulado no Ano", "Anual"],
         )
 
-        df_filtrado = df_mes[
-            (
-                df_mes["municipio"].isin(municipios_selecionados)
-                & df_mes["ano"].isin(anos_de_interesse)
-            )
-        ]
+        df_filtrado = df_mes[(df_mes["ano"].isin(anos_de_interesse))]
 
         (
             df_comex_hist,
@@ -590,6 +659,7 @@ def display_comex_municipios_expander(
                 height=450,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
+                color_map=CORES_MUNICIPIOS,
             )
 
             fig_hist_perc = criar_grafico_barras(
@@ -600,6 +670,7 @@ def display_comex_municipios_expander(
                 height=450,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
+                color_map=CORES_MUNICIPIOS,
             )
 
             view_mode = st.radio(
@@ -637,6 +708,7 @@ def display_comex_municipios_expander(
                 height=450,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
+                color_map=CORES_MUNICIPIOS,
             )
             st.markdown(f"##### Exportações em {MESES_DIC[ult_mes_comex]}")
             st.plotly_chart(fig_mes, width="stretch")
@@ -656,6 +728,7 @@ def display_comex_municipios_expander(
                 height=450,
                 data_label_format=".1f",
                 hover_label_format=",.2f",
+                color_map=CORES_MUNICIPIOS,
             )
             st.markdown(f"##### Exportações de Janeiro a {MESES_DIC[ult_mes_comex]}")
             st.plotly_chart(fig_acum, width="stretch")
@@ -669,6 +742,7 @@ def display_comex_municipios_expander(
                 height=450,
                 data_label_format=",.1f",
                 hover_label_format=",.2f",
+                color_map=CORES_MUNICIPIOS,
             )
             st.markdown("##### Exportações Anuais")
             st.plotly_chart(fig_anual, width="stretch")
@@ -735,6 +809,7 @@ def preparar_grafico_comex(df_filtrado_exibicao):
         height=450,
         data_label_format=",.0f",
         hover_label_format=",.0f",
+        color_map=CORES_MUNICIPIOS,
     )
 
 
@@ -900,27 +975,251 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
                     st.warning("Nenhum dado disponível para o gráfico.")
 
 
-def show_page_comex(
-    df_comex_ano,
-    df_comex_mensal,
-    municipio_de_interesse,
-    municipios_de_interesse,
-):
+def show_page_comex(df_comex_ano, df_comex_mensal, municipio_de_interesse):
     """Função principal que renderiza a página de Comércio Exterior."""
 
-    display_comex_kpi_cards(df_comex_ano, df_comex_mensal, municipio_de_interesse)
+    display_comex_kpi_cards(
+        df_comex_ano, df_comex_mensal, municipio_interesse=municipio_de_interesse
+    )
     st.markdown("##### Clique nos menus abaixo para explorar os dados")
 
     display_comex_municipios_expander(
         df_mes=df_comex_mensal,
-        municipio_interesse=municipio_de_interesse,
-        municipios_interesse=municipios_de_interesse,
     )
     display_comex_produto_pais_expander(
         df=df_comex_municipio, municipio_interesse=municipio_de_interesse
     )
 
 
+# ==============================================================================
+# FUNÇÕES DA PÁGINA DE SEGURANÇA
+# ==============================================================================
+
+
+@st.cache_data
+def preparar_dados_graficos_seguranca(df_filtrado, coluna_selecionada, is_taxa=False):
+    """
+    Prepara os DataFrames pivotados para as abas da página de segurança.
+    Agora aceita um parâmetro 'is_taxa' para saber qual coluna de valor usar.
+    """
+    df_hist, df_acum, df_anual = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+    ult_ano, ult_mes = None, None
+
+    # Define o nome da coluna de valor com base no tipo de dado (absoluto ou taxa)
+    coluna_valor = f"taxa_{coluna_selecionada}" if is_taxa else coluna_selecionada
+
+    if not df_filtrado.empty and coluna_valor in df_filtrado.columns:
+        ult_ano = df_filtrado["ano"].max()
+        ult_mes = df_filtrado[df_filtrado["ano"] == ult_ano]["mes"].max()
+
+        # Histórico Mensal
+        df_hist = (
+            df_filtrado.assign(
+                date=lambda x: pd.to_datetime(
+                    x["ano"].astype(str)
+                    + "-"
+                    + x["mes"].astype(str).str.zfill(2)
+                    + "-01"
+                )
+            )
+            .pivot_table(
+                index="date",
+                columns="municipio",
+                values=coluna_valor,
+                aggfunc="sum",
+                fill_value=0,
+            )
+            .sort_index()
+        )
+
+        # Acumulado no Ano
+        df_acum_temp = df_filtrado[df_filtrado["mes"] <= ult_mes]
+        df_acum = df_acum_temp.pivot_table(
+            index="ano",
+            columns="municipio",
+            values=coluna_valor,
+            aggfunc="sum",
+            fill_value=0,
+        ).sort_index()
+
+        # Anual
+        ano_completo = checar_ult_ano_completo(df_filtrado)
+        df_anual_temp = df_filtrado[df_filtrado["ano"] <= ano_completo]
+        df_anual = df_anual_temp.pivot_table(
+            index="ano",
+            columns="municipio",
+            values=coluna_valor,
+            aggfunc="sum",
+            fill_value=0,
+        ).sort_index(ascending=False)
+
+    return df_hist, df_acum, df_anual, ult_ano, ult_mes
+
+
+def display_secao_seguranca(
+    df_seguranca, df_seguranca_taxa, titulo_expander, dicionario_indicadores, key_prefix
+):
+    """Função genérica para exibir uma seção de indicadores de segurança com opção de taxa."""
+    with st.expander(titulo_expander, expanded=False):
+        # --- WIDGETS DE FILTRO ---
+
+        indicador_selecionado = st.selectbox(
+            "Selecione um indicador:",
+            options=list(dicionario_indicadores.keys()),
+            key=f"{key_prefix}_selectbox",
+        )
+        coluna_selecionada = dicionario_indicadores[indicador_selecionado]
+
+        # --- BOTÕES PARA ALTERNAR VISUALIZAÇÃO ---
+        view_mode = st.radio(
+            "Visualizar por:",
+            options=["Número de Ocorrências", "Taxa por 100 mil hab."],
+            horizontal=True,
+            label_visibility="collapsed",
+            key=f"view_mode_{key_prefix}",
+        )
+
+        # --- PREPARAÇÃO DOS DADOS COM BASE NA ESCOLHA DO USUÁRIO ---
+        is_taxa = view_mode == "Taxa por 100 mil hab."
+        df_ativo = df_seguranca_taxa if is_taxa else df_seguranca
+        label_y_grafico = "Taxa por 100 mil hab." if is_taxa else "Ocorrências"
+        data_label_format = ",.1f" if is_taxa else ",.0f"
+        hover_label_format = ",.2f" if is_taxa else ",.0f"
+
+        df_hist, df_acum, df_anual, ult_ano, ult_mes = (
+            preparar_dados_graficos_seguranca(df_ativo, coluna_selecionada, is_taxa)
+        )
+
+        anos_disponiveis = sorted(df_ativo["ano"].unique().tolist(), reverse=True)
+
+        # --- RENDERIZAÇÃO DAS ABAS ---
+        tab_hist, tab_acum, tab_anual = st.tabs(
+            ["Histórico Mensal", "Acumulado no Ano", "Anual"]
+        )
+
+        with tab_hist:
+            if not anos_disponiveis:
+                st.warning("Nenhum dado disponível para os filtros selecionados.")
+            else:
+                ANO_SELECIONADO = st.selectbox(
+                    "Selecione o ano para o gráfico:",
+                    options=anos_disponiveis,
+                    index=0,
+                    key=f"{key_prefix}_hist_ano",
+                )
+                st.markdown(
+                    f"##### {indicador_selecionado} - Histórico Mensal em {ANO_SELECIONADO}"
+                )
+
+                df_hist_ano = df_hist[df_hist.index.year == ANO_SELECIONADO]
+                df_hist_ano.index = df_hist_ano.index.strftime("%Y-%m")
+
+                fig = criar_grafico_barras(
+                    df=df_hist_ano,
+                    titulo="",
+                    label_y=label_y_grafico,
+                    barmode="group",
+                    height=450,
+                    data_label_format=data_label_format,
+                    color_map=CORES_MUNICIPIOS,
+                    hover_label_format=hover_label_format,
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+        if ult_mes:
+            with tab_acum:
+                df_acum.index = (
+                    "Jan-"
+                    + MESES_DIC[ult_mes][:3]
+                    + "/"
+                    + df_acum.index.astype(str).str.slice(-2)
+                )
+                st.markdown(
+                    f"##### {indicador_selecionado} - Acumulado de Janeiro a {MESES_DIC[ult_mes]}"
+                )
+                fig = criar_grafico_barras(
+                    df=df_acum,
+                    titulo="",
+                    label_y=label_y_grafico,
+                    barmode="group",
+                    height=450,
+                    data_label_format=data_label_format,
+                    color_map=CORES_MUNICIPIOS,
+                    hover_label_format=hover_label_format,
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+        with tab_anual:
+            st.markdown("##### Total Anual de Ocorrências")
+            fig = criar_grafico_barras(
+                df=df_anual,
+                titulo="",
+                label_y=label_y_grafico,
+                barmode="group",
+                height=450,
+                data_label_format=data_label_format,
+                color_map=CORES_MUNICIPIOS,
+                hover_label_format=hover_label_format,
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+
+def show_page_seguranca(df_seguranca, df_seguranca_taxa):
+    # Dicionário de Indicadores Gerais
+    INDICADORES_GERAIS = {
+        "Homicídio Doloso": "homicidio_doloso",
+        "Vítimas de Homicídio Doloso": "total_vitimas_homicidio_doloso",
+        "Latrocínio": "latrocinio",
+        "Furtos": "furtos",
+        "Roubos": "roubos",
+        "Furto de Veículo": "furto_veiculo",
+        "Roubo de Veículo": "roubo_veiculo",
+        "Estelionato": "estelionato",
+    }
+
+    # Dicionário de Violência Contra a Mulher
+    INDICADORES_VIOLENCIA_MULHER = {
+        "Feminicídio Consumado": "feminicidio_consumado",
+        "Feminicídio Tentado": "feminicidio_tentado",
+        "Ameaça": "ameaca",
+        "Estupro": "estupro",
+        "Lesão Corporal": "lesao_corporal",
+    }
+
+    # Dicionário de Drogas e Armas
+    INDICADORES_DROGAS_ARMAS = {
+        "Delitos com Armas e Munições": "delitos_armas_municoes",
+        "Posse de Entorpecentes": "entorpecentes_posse",
+        "Tráfico de Entorpecentes": "entorpecentes_trafico",
+    }
+
+    # Chama a função de display para cada seção
+    display_secao_seguranca(
+        df_seguranca,
+        df_seguranca_taxa,
+        "Indicadores Gerais",
+        INDICADORES_GERAIS,
+        "geral",
+    )
+    display_secao_seguranca(
+        df_seguranca,
+        df_seguranca_taxa,
+        "Violência Contra a Mulher",
+        INDICADORES_VIOLENCIA_MULHER,
+        "mulher",
+    )
+    display_secao_seguranca(
+        df_seguranca,
+        df_seguranca_taxa,
+        "Crimes Relacionados à Drogas e Armas",
+        INDICADORES_DROGAS_ARMAS,
+        "drogas",
+    )
+
+
+# ==============================================================================
+# FUNÇÕES DA PÁGINA DE FINANÇAS
+# ==============================================================================
 @st.cache_data
 def preparar_dados_siconfi(df, municipio_de_interesse, cod_conta):
     return (
@@ -979,6 +1278,7 @@ def display_expander_siconfi(df, municipio_de_interesse, cod_conta, conta, expan
             height=450,
             data_label_format=".1f",
             hover_label_format=",.2f",
+            color_map=CORES_MUNICIPIOS,
         )
 
         df_siconfi_mun_acum = df_siconfi_mun.query(
@@ -1008,6 +1308,7 @@ def display_expander_siconfi(df, municipio_de_interesse, cod_conta, conta, expan
             height=450,
             data_label_format=".1f",
             hover_label_format=",.2f",
+            color_map=CORES_MUNICIPIOS,
         )
 
         df_siconfi_mun_yoy = df_siconfi_mun.query(
@@ -1037,6 +1338,7 @@ def display_expander_siconfi(df, municipio_de_interesse, cod_conta, conta, expan
             height=450,
             data_label_format=".1f",
             hover_label_format=",.2f",
+            color_map=CORES_MUNICIPIOS,
         )
 
         df_siconfi_mun_acum_yoy = df_siconfi_mun.query(
@@ -1066,6 +1368,7 @@ def display_expander_siconfi(df, municipio_de_interesse, cod_conta, conta, expan
             height=450,
             data_label_format=".1f",
             hover_label_format=",.2f",
+            color_map=CORES_MUNICIPIOS,
         )
 
         view_mode = st.radio(
@@ -1108,7 +1411,7 @@ def show_page_financas(df, municipio_de_interesse):
         municipio_de_interesse=municipio_de_interesse,
         cod_conta="ReceitasCorrentes",
         conta="Receitas Correntes",
-        expanded=True,
+        expanded=False,
     )
 
     # Total de Receitas
@@ -1152,7 +1455,6 @@ df_caged_cnae = carregar_dados_emprego_cnae(
 )
 
 # Comércio Exterior
-anos_comex = range(min(anos_de_interesse) - 1, max(anos_de_interesse) + 1)
 df_comex_ano = carregar_dados_comex_anual(
     municipios=municipios_de_interesse, anos=anos_comex
 )
@@ -1166,38 +1468,95 @@ df_comex_municipio = carregar_dados_comex_municipio(
 )
 
 df_siconfi_rreo = carregar_dados_siconfi_rreo()
+
+df_seguranca = carregar_dados_seguranca(
+    municipios=municipios_de_interesse, anos=anos_de_interesse
+)
+
+df_seguranca_taxa = carregar_dados_seguranca_taxa(
+    municipios=municipios_de_interesse, anos=anos_de_interesse
+)
+
 # ==============================================================================
 # BARRA LATERAL E NAVEGAÇÃO ENTRE PÁGINAS
 # ==============================================================================
 
 with st.sidebar:
+    st.title("Filtros Globais")
+
+    # --- FILTRO GLOBAL DE MUNICÍPIOS ---
+    municipios_selecionados_global = st.multiselect(
+        "Selecione o(s) município(s):",
+        options=municipios_de_interesse,
+        default=municipios_de_interesse,
+        key="filtro_global_municipios",
+    )
+
+    st.markdown("---")
     pagina_selecionada = option_menu(
         menu_title="Menu",
-        options=["Emprego", "Comércio Exterior", "Finanças"],
-        icons=["briefcase-fill", "globe2", "bar-chart-fill"],
+        options=["Início", "Emprego", "Comércio Exterior", "Segurança", "Finanças"],
+        icons=[
+            "house-door-fill",
+            "briefcase-fill",
+            "globe2",
+            "shield-shaded",
+            "piggy-bank-fill",
+        ],
         menu_icon="cast",
         default_index=0,
     )
+
+    # ==============================================================================
+# FILTRAGEM GLOBAL DOS DADOS
 # ==============================================================================
-# PÁGINA DE EMPREGO
+# Filtra todos os dataframes necessários com base na seleção global da sidebar
+df_caged_filtrado = df_caged[df_caged["municipio"].isin(municipios_selecionados_global)]
+df_caged_cnae_filtrado = df_caged_cnae[
+    df_caged_cnae["municipio"].isin(municipios_selecionados_global)
+]
+df_comex_ano_filtrado = df_comex_ano[
+    df_comex_ano["municipio"].isin(municipios_selecionados_global)
+]
+df_comex_mensal_filtrado = df_comex_mensal[
+    df_comex_mensal["municipio"].isin(municipios_selecionados_global)
+]
+df_seguranca_filtrado = df_seguranca[
+    df_seguranca["municipio"].isin(municipios_selecionados_global)
+]
+df_seguranca_taxa_filtrado = df_seguranca_taxa[
+    df_seguranca_taxa["municipio"].isin(municipios_selecionados_global)
+]
+df_siconfi_filtrado = df_siconfi_rreo[
+    df_siconfi_rreo["municipio"].isin(municipios_selecionados_global)
+]
 # ==============================================================================
+# PÁGINAS
+# ==============================================================================
+if pagina_selecionada == "Início":
+    show_page_home()
 
 if pagina_selecionada == "Emprego":
-    # Chama a função principal da página de emprego, passando os dados e configurações
-    show_page_emprego(
-        df_caged, df_caged_cnae, municipio_de_interesse, municipios_de_interesse
-    )
+    show_page_emprego(df_caged_filtrado, df_caged_cnae_filtrado, municipio_de_interesse)
 
 elif pagina_selecionada == "Comércio Exterior":
-    st.title("Dashboard de Comércio Exterior")
-    st.markdown("### Análise de Exportações")
     show_page_comex(
-        df_comex_ano, df_comex_mensal, municipio_de_interesse, municipios_de_interesse
+        df_comex_ano_filtrado,
+        df_comex_mensal_filtrado,
+        municipio_de_interesse=municipio_de_interesse,
     )
+
+elif pagina_selecionada == "Segurança":
+    st.title("Dashboard de Segurança")
+    st.markdown("### Indicadores de Segurança Pública")
+    show_page_seguranca(df_seguranca_filtrado, df_seguranca_taxa_filtrado)
 
 elif pagina_selecionada == "Finanças":
     st.title("Dashboard de Finanças Públicas")
-    show_page_financas(df_siconfi_rreo, municipio_de_interesse)
+    st.markdown("### Indicadores de Finanças Públicas")
+    show_page_financas(df_siconfi_filtrado, municipio_de_interesse)
 
 
 manter_posicao_scroll()
+
+# %%

@@ -112,6 +112,7 @@ def criar_grafico_barras(
     height=500,
     data_label_format=",.2f",
     hover_label_format=",.2f",
+    color_map=None,
 ):
     """
     Cria um gráfico de barras customizado e reutilizável com Plotly Express.
@@ -145,6 +146,7 @@ def criar_grafico_barras(
         barmode=barmode,
         height=height,
         custom_data=["hover_value_formatted", "data_label_formatted"],
+        color_discrete_map=color_map,
     )
 
     xaxis_config = {}

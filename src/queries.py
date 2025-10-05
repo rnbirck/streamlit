@@ -180,3 +180,72 @@ ORDER BY ano DESC,
          pais,
          mes DESC;
 """
+
+
+QUERY_SEGURANCA = """
+SELECT 
+    ano,
+    mes,
+    municipio,
+    homicidio_doloso,
+    total_vitimas_homicidio_doloso,
+    latrocinio,
+    furtos,
+    abigeato,
+    furto_veiculo,
+    roubos,
+    roubo_veiculo,
+    estelionato,
+    delitos_armas_municoes,
+    entorpecentes_posse,
+    entorpecentes_trafico,
+    vitimas_latrocinio,
+    vitimas_lesao_corp_seg_morte,
+    feminicidio_consumado,
+    feminicidio_tentado,
+    ameaca,
+    estupro,
+    lesao_corporal
+FROM
+    seguranca
+WHERE
+    municipio IN :lista_municipios AND ano IN :lista_anos
+"""
+
+QUERY_SEGURANCA_TAXA = """
+WITH pop_feminina AS (
+    SELECT
+        ano,
+        municipio,
+        pop_estimada AS pop_feminina
+    FROM populacao_sexo
+    WHERE sexo = 'Feminino'
+)
+SELECT
+    t1.ano,
+    t1.mes,
+    t1.municipio,
+    ROUND(((t1.homicidio_doloso * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_homicidio_doloso,
+    ROUND(((t1.total_vitimas_homicidio_doloso * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_vitimas_homicidio_doloso,
+    ROUND(((t1.latrocinio * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_latrocinio,
+    ROUND(((t1.furtos * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_furtos,
+    ROUND(((t1.abigeato * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_abigeato,
+    ROUND(((t1.furto_veiculo * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_furto_veiculo,
+    ROUND(((t1.roubos * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_roubos,
+    ROUND(((t1.roubo_veiculo * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_roubo_veiculo,
+    ROUND(((t1.estelionato * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_estelionato,
+    ROUND(((t1.delitos_armas_municoes * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_delitos_armas_municoes,
+    ROUND(((t1.entorpecentes_posse * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_entorpecentes_posse,
+    ROUND(((t1.entorpecentes_trafico * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_entorpecentes_trafico,
+    ROUND(((t1.vitimas_latrocinio * 10000.0) / NULLIF(t2.pop_estimada, 0))::NUMERIC, 3) AS taxa_vitimas_latrocinio,
+    
+    ROUND(((t1.feminicidio_consumado * 10000.0) / NULLIF(t3.pop_feminina, 0))::NUMERIC, 3) AS taxa_feminicidio_consumado,
+    ROUND(((t1.feminicidio_tentado * 10000.0) / NULLIF(t3.pop_feminina, 0))::NUMERIC, 3) AS taxa_feminicidio_tentado,
+    ROUND(((t1.ameaca * 10000.0) / NULLIF(t3.pop_feminina, 0))::NUMERIC, 3) AS taxa_ameaca,
+    ROUND(((t1.estupro * 10000.0) / NULLIF(t3.pop_feminina, 0))::NUMERIC, 3) AS taxa_estupro,
+    ROUND(((t1.lesao_corporal * 10000.0) / NULLIF(t3.pop_feminina, 0))::NUMERIC, 3) AS taxa_lesao_corporal
+FROM seguranca t1
+JOIN populacao t2 ON t1.ano = t2.ano AND t1.municipio = t2.municipio
+JOIN pop_feminina t3 ON t1.ano = t3.ano AND t1.municipio = t3.municipio
+WHERE t1.municipio IN :lista_municipios AND t1.ano IN :lista_anos
+"""

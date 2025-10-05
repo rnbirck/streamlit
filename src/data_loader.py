@@ -8,6 +8,8 @@ ID_COMEX_ANUAL = "1j4Xx0_PPHwDDvC9ybKhcbBovk3HpXUGVKnBfS5JxxEo"
 ID_COMEX_MENSAL = "1I_d1n1KoU3VbHr5FVCX7oGp6VezgAgQQVvMnTFApbRU"
 ID_COMEX_MUNICIPIO = "1DC89QdcB5GxuZgZamHH8xOSlp-BP_5oayKa5jsjl2c8"
 ID_SICONFI_RREO = "1zGPeIXTfikqDN_n_-EGy0UZYCmeLTqZYGrx4TwpepO0"
+ID_SEGURANCA = "1cPzaMIrHk-T5oJQKPxlFepHf63_-nQjHIFTf2xZzsog"
+ID_SEGURANCA_TAXA = "1GUiqyYyXVleSNfkhdi0R36EFTAGw_hafeKylmMDRb4c"
 
 
 def construir_url_gsheet(sheet_id):
@@ -59,3 +61,19 @@ def carregar_dados_siconfi_rreo():
     url = construir_url_gsheet(ID_SICONFI_RREO)
     df = pd.read_csv(url)
     return df
+
+
+@st.cache_data(ttl=CACHE_TTL)
+def carregar_dados_seguranca(municipios, anos):
+    """Lê os dados de seguranca da planilha Google."""
+    url = construir_url_gsheet(ID_SEGURANCA)
+    df = pd.read_csv(url)
+    return df[(df["municipio"].isin(municipios)) & (df["ano"].isin(anos))]
+
+
+@st.cache_data(ttl=CACHE_TTL)
+def carregar_dados_seguranca_taxa(municipios, anos):
+    """Lê os dados de taxa de seguranca da planilha Google."""
+    url = construir_url_gsheet(ID_SEGURANCA_TAXA)
+    df = pd.read_csv(url)
+    return df[(df["municipio"].isin(municipios)) & (df["ano"].isin(anos))]

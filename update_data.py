@@ -11,15 +11,17 @@ import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 
 
-from queries import (
+from src.queries import (
     QUERY_EMPREGO_MUNICIPIOS,
     QUERY_EMPREGO_CNAE,
     QUERY_EXP_ANUAL,
     QUERY_EXP_MENSAL,
     QUERY_EXP_MUN_SELECIONADO,
+    QUERY_SEGURANCA,
+    QUERY_SEGURANCA_TAXA,
 )
 
-from app import (
+from src.config import (
     municipio_de_interesse,
     municipios_de_interesse,
     anos_de_interesse,
@@ -130,6 +132,28 @@ atualizar_google_sheet(
     params={"municipio": municipio_de_interesse, "lista_anos": tuple(anos_comex)},
 )
 
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_SEGURANCA,
+    "dados_seguranca",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_SEGURANCA_TAXA,
+    "dados_seguranca_taxa",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
 
 # --- FUNÇÃO PARA COLETAR DADOS DO SICONFI ---
 
@@ -253,3 +277,5 @@ df_rreo = coletar_rreo(
 atualizar_gsheet_com_df(gspread_config, df_rreo, "dados_siconfi_rreo")
 
 print(f"\nProcesso concluído em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}!")
+
+# %%
