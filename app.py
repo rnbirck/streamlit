@@ -61,13 +61,11 @@ def show_page_home():
     st.markdown("---")
 
     st.markdown(
-        """
+        f"""
         Bem-vindo(a) ao painel de visualização de dados! 
         
         Este dashboard foi desenvolvido para centralizar e apresentar diversos indicadores socioeconômicos 
-        para os municípios selecionados, permitindo uma análise ágil e comparativa.
-        
-        Utilize as ferramentas de navegação e filtragem para explorar as informações.
+        de {municipio_de_interesse}, permitindo a comparação direta com municípios vizinhos e de perfil semelhante.
         """
     )
 
