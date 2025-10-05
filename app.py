@@ -117,7 +117,7 @@ def show_page_home():
         st.markdown(
             """
             #### 🛡️ Segurança Pública
-            Reúne os principais indicadores de criminalidade divulgados pela **Secretaria de Segurança Pública**. Os dados são agrupados em categorias como crimes contra a vida, crimes patrimoniais e violência contra a mulher, com visualização em números absolutos e taxas por 100 mil habitantes.
+            Reúne os principais indicadores de criminalidade divulgados pela **Secretaria de Segurança Pública**. Os dados são agrupados em categorias como crimes contra a vida, crimes patrimoniais e violência contra a mulher, com visualização em números absolutos e taxas por 10 mil habitantes.
             
             *Frequência de Atualização: **Mensal***
             """
@@ -1073,16 +1073,16 @@ def display_secao_seguranca(
         # --- BOTÕES PARA ALTERNAR VISUALIZAÇÃO ---
         view_mode = st.radio(
             "Visualizar por:",
-            options=["Número de Ocorrências", "Taxa por 100 mil hab."],
+            options=["Número de Ocorrências", "Taxa por 10 mil hab."],
             horizontal=True,
             label_visibility="collapsed",
             key=f"view_mode_{key_prefix}",
         )
 
         # --- PREPARAÇÃO DOS DADOS COM BASE NA ESCOLHA DO USUÁRIO ---
-        is_taxa = view_mode == "Taxa por 100 mil hab."
+        is_taxa = view_mode == "Taxa por 10 mil hab."
         df_ativo = df_seguranca_taxa if is_taxa else df_seguranca
-        label_y_grafico = "Taxa por 100 mil hab." if is_taxa else "Ocorrências"
+        label_y_grafico = "Taxa por 10 mil hab." if is_taxa else "Ocorrências"
         data_label_format = ",.1f" if is_taxa else ",.0f"
         hover_label_format = ",.2f" if is_taxa else ",.0f"
 
