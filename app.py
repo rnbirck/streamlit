@@ -71,93 +71,98 @@ if "emprego_expander_state" not in st.session_state:
 # CARREGAMENTO DE DADOS
 # ==============================================================================
 
-# Emprego
-df_caged = carregar_dados_emprego_municipios(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
-df_caged_cnae = carregar_dados_emprego_cnae(
-    municipio=municipio_de_interesse, anos=anos_de_interesse
-)
+with st.spinner("Carregando dados... Por favor, aguarde."):
+    df_caged = carregar_dados_emprego_municipios(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
+    df_caged_cnae = carregar_dados_emprego_cnae(
+        municipio=municipio_de_interesse, anos=anos_de_interesse
+    )
 
-df_caged_faixa_etaria = carregar_dados_emprego_faixa_etaria(
-    municipio=municipio_de_interesse, anos=anos_de_interesse
-)
+    df_caged_faixa_etaria = carregar_dados_emprego_faixa_etaria(
+        municipio=municipio_de_interesse, anos=anos_de_interesse
+    )
 
-df_caged_grau_instrucao = carregar_dados_emprego_grau_instrucao(
-    municipio=municipio_de_interesse, anos=anos_de_interesse
-)
+    df_caged_grau_instrucao = carregar_dados_emprego_grau_instrucao(
+        municipio=municipio_de_interesse, anos=anos_de_interesse
+    )
 
-df_caged_raca_cor = carregar_dados_emprego_raca_cor(
-    municipio=municipio_de_interesse, anos=anos_de_interesse
-)
+    df_caged_raca_cor = carregar_dados_emprego_raca_cor(
+        municipio=municipio_de_interesse, anos=anos_de_interesse
+    )
 
-df_caged_sexo = carregar_dados_emprego_sexo(
-    municipio=municipio_de_interesse, anos=anos_de_interesse
-)
-# Comércio Exterior
-df_comex_ano = carregar_dados_comex_anual(
-    municipios=municipios_de_interesse, anos=anos_comex
-)
+    df_caged_sexo = carregar_dados_emprego_sexo(
+        municipio=municipio_de_interesse, anos=anos_de_interesse
+    )
+    # Comércio Exterior
+    df_comex_ano = carregar_dados_comex_anual(
+        municipios=municipios_de_interesse, anos=anos_comex
+    )
 
-df_comex_mensal = carregar_dados_comex_mensal(
-    municipios=municipios_de_interesse, anos=anos_comex
-)
+    df_comex_mensal = carregar_dados_comex_mensal(
+        municipios=municipios_de_interesse, anos=anos_comex
+    )
 
-df_comex_municipio = carregar_dados_comex_municipio(
-    municipio=municipio_de_interesse, anos=anos_comex
-)
+    df_comex_municipio = carregar_dados_comex_municipio(
+        municipio=municipio_de_interesse, anos=anos_comex
+    )
 
-df_siconfi_rreo = carregar_dados_siconfi_rreo()
+    # Financas
+    df_siconfi_rreo = carregar_dados_siconfi_rreo()
 
-df_seguranca = carregar_dados_seguranca(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
+    # Segurança
+    df_seguranca = carregar_dados_seguranca(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
 
-df_seguranca_taxa = carregar_dados_seguranca_taxa(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
+    df_seguranca_taxa = carregar_dados_seguranca_taxa(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
 
-df_cad = carregar_dados_CAD(municipios=municipios_de_interesse, anos=anos_de_interesse)
+    # Assistencia Social
+    df_cad = carregar_dados_CAD(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
 
-df_bolsa_familia = carregar_dados_bolsa_familia(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
+    df_bolsa_familia = carregar_dados_bolsa_familia(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
+    # Empresas Ativas
+    df_cnpj_total = carregar_dados_cnpj_total(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
 
-df_cnpj_total = carregar_dados_cnpj_total(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
+    df_cnpj_cnae = carregar_dados_cnpj_cnae(
+        municipio=municipio_de_interesse, anos=anos_de_interesse
+    )
 
-df_cnpj_cnae = carregar_dados_cnpj_cnae(
-    municipio=municipio_de_interesse, anos=anos_de_interesse
-)
+    df_mei_total = carregar_dados_mei_total(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
 
-df_mei_total = carregar_dados_mei_total(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
+    df_mei_cnae = carregar_dados_mei_cnae(
+        municipio=municipio_de_interesse, anos=anos_de_interesse
+    )
+    # Educação
+    df_educacao_matriculas = carregar_dados_educacao_matriculas(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
 
-df_mei_cnae = carregar_dados_mei_cnae(
-    municipio=municipio_de_interesse, anos=anos_de_interesse
-)
+    df_educacao_rendimento = carregar_dados_educacao_rendimento(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
 
-df_educacao_matriculas = carregar_dados_educacao_matriculas(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
+    df_educacao_ideb_municipio = carregar_dados_educacao_ideb_municipio(
+        municipios=municipios_de_interesse
+    )
 
-df_educacao_rendimento = carregar_dados_educacao_rendimento(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
-
-df_educacao_ideb_municipio = carregar_dados_educacao_ideb_municipio(
-    municipios=municipios_de_interesse
-)
-
-df_educacao_ideb_escolas = carregar_dados_educacao_ideb_escolas(
-    municipios=municipios_de_interesse
-)
-
-df_saude_mensal = carregar_dados_saude_mensal(
-    municipios=municipios_de_interesse, anos=anos_de_interesse
-)
+    df_educacao_ideb_escolas = carregar_dados_educacao_ideb_escolas(
+        municipios=municipios_de_interesse
+    )
+    # Saude
+    df_saude_mensal = carregar_dados_saude_mensal(
+        municipios=municipios_de_interesse, anos=anos_de_interesse
+    )
 
 # ==============================================================================
 # BARRA LATERAL E NAVEGAÇÃO ENTRE PÁGINAS
