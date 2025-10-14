@@ -21,6 +21,15 @@ MESES_DIC = {
     12: "Dezembro",
 }
 
+BIMESTRE_DIC = {
+    1: "Fevereiro",
+    2: "Abril",
+    3: "Junho",
+    4: "Agosto",
+    5: "Outubro",
+    6: "Dezembro",
+}
+
 
 def manter_posicao_scroll():
     """
@@ -69,6 +78,22 @@ def carregar_css(caminho_arquivo):
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
+def titulo_centralizado(texto: str, level: int, cor: str = None):
+    """
+    Cria um título Markdown centralizado com um nível de heading específico (h1, h2, ...).
+
+    Args:
+        texto (str): O texto do título.
+        level (int): O nível do heading (1 para <h1>, 2 para <h2>, etc.).
+        cor (str, optional): A cor do texto (ex: 'gray', '#FF4B4B'). Defaults to None.
+    """
+    style = "text-align: center;"
+    if cor:
+        style += f" color: {cor};"
+
+    st.markdown(f"<h{level} style='{style}'>{texto}</h{level}>", unsafe_allow_html=True)
+
+
 def checar_ult_ano_completo(df):
     """
     Verifica se o último ano no DataFrame está completo (ou seja, se contém dados até dezembro).
@@ -102,6 +127,26 @@ def filtrar_municipio_ult_mes_ano(df, municipio):
     return df[
         (df["municipio"] == municipio) & (df["ano"] == ult_ano) & (df["mes"] == ult_mes)
     ]
+
+
+@st.cache_data
+def calcular_yoy(df, ultimo_mes, ultimo_ano, coluna, round):
+    df_mes_historico = df[df["mes"] == ultimo_mes].sort_values(by="ano")
+
+    df_mes_historico[f"{coluna}_ano_anterior"] = df_mes_historico[f"{coluna}"].shift(1)
+
+    # 3. Filtra apenas a linha do último ano, que agora contém o valor do ano anterior
+    dados_recentes = df_mes_historico[df_mes_historico["ano"] == ultimo_ano]
+
+    if not dados_recentes.empty:
+        valor_atual = dados_recentes[f"{coluna}"].iloc[0]
+        valor_anterior = dados_recentes[f"{coluna}_ano_anterior"].iloc[0]
+
+        # 4. Calcula a variação percentual, tratando divisão por zero
+        if pd.notna(valor_anterior) and valor_anterior > 0:
+            variacao = ((valor_atual / valor_anterior) - 1) * 100
+
+    return variacao.round(round)
 
 
 def criar_grafico_barras(
@@ -162,7 +207,7 @@ def criar_grafico_barras(
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=1.02,
+            y=1,
             xanchor="left",
             x=0,
             title="",
@@ -201,6 +246,44 @@ def criar_tabela_formatada(df, index_col, ult_ano, ult_mes):
         + "/"
         + df_pivot.columns.astype(str).str.slice(-2)
     )
+    df_pivot.index.name = index_col.replace("_", " ").title()
+
+    return df_pivot
+
+
+@st.cache_data
+def criar_tabela_formatada_mes(df, index_col, ult_ano, ult_mes):
+    """Cria uma tabela formatada para exibição no Streamlit."""
+    df_filtrado = df[df["mes"] == ult_mes]
+    df_pivot = df_filtrado.pivot_table(
+        index=index_col,
+        columns="ano",
+        values="saldo_movimentacao",
+        aggfunc="sum",
+        fill_value=0,
+    ).sort_values(by=ult_ano, ascending=False)
+
+    df_pivot.columns = (
+        f"{MESES_DIC[ult_mes][:3]}" + "/" + df_pivot.columns.astype(str).str.slice(-2)
+    )
+    df_pivot.index.name = index_col.replace("_", " ").title()
+
+    return df_pivot
+
+
+@st.cache_data
+def criar_tabela_formatada_ano(df, index_col):
+    """Cria uma tabela formatada para exibição no Streamlit."""
+    ult_ano = checar_ult_ano_completo(df)
+    df_filtrado = df[df["ano"] <= ult_ano]
+    df_pivot = df_filtrado.pivot_table(
+        index=index_col,
+        columns="ano",
+        values="saldo_movimentacao",
+        aggfunc="sum",
+        fill_value=0,
+    ).sort_values(by=ult_ano, ascending=False)
+
     df_pivot.index.name = index_col.replace("_", " ").title()
 
     return df_pivot

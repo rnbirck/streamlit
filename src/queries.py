@@ -32,6 +32,74 @@ GROUP BY t1.ano, t1.mes, t2.municipio, t1.cnae_2_subclasse, t3.subclasse, t3.gru
 ORDER BY t1.ano DESC, t1.mes DESC;
 """
 
+QUERY_EMPREGO_GRAU_INSTRUCAO = """
+SELECT t1.ano,
+       t1.mes,
+       t3.municipio,
+       t2.grau_instrucao_desc AS grau_instrucao,
+       SUM(t1.saldo_movimentacao) as saldo_movimentacao
+FROM caged_prefeituras t1
+JOIN grau_instrucao t2 ON t1.grau_instrucao = t2.cod_grau_instrucao
+JOIN municipio t3 ON t1.id_municipio = t3.id_municipio
+WHERE t3.municipio = :municipio AND t1.ano IN :lista_anos
+GROUP BY t1.ano,
+         t1.mes,
+         t3.municipio,
+         t2.grau_instrucao_desc
+"""
+
+QUERY_EMPREGO_FAIXA_ETARIA = """
+SELECT t1.ano,
+       t1.mes,
+       t3.municipio,
+       t2.faixa_etaria_desc AS faixa_etaria,
+       SUM(t1.saldo_movimentacao) as saldo_movimentacao
+FROM caged_prefeituras t1
+JOIN faixa_etaria t2 ON t1.faixa_etaria = t2.cod_faixa_etaria
+JOIN municipio t3 ON t1.id_municipio = t3.id_municipio
+WHERE t3.municipio = :municipio AND t1.ano IN :lista_anos
+GROUP BY t1.ano,
+         t1.mes,
+         t3.municipio,
+         t2.faixa_etaria_desc;
+"""
+
+QUERY_EMPREGO_RACA_COR = """
+SELECT t1.ano,
+       t1.mes,
+       t3.municipio,
+       t2.raca_cor_desc AS raca_cor,
+       SUM(t1.saldo_movimentacao) as saldo_movimentacao
+FROM caged_prefeituras t1
+JOIN raca_cor t2 ON t1.raca_cor = t2.cod_raca_cor
+JOIN municipio t3 ON t1.id_municipio = t3.id_municipio
+WHERE t3.municipio = :municipio AND t1.ano IN :lista_anos
+GROUP BY t1.ano,
+         t1.mes,
+         t3.municipio,
+         t2.raca_cor_desc;
+"""
+
+QUERY_EMPREGO_SEXO = """
+SELECT t1.ano,
+       t1.mes,
+       t2.municipio,
+       t1.sexo AS cod_sexo, 
+       SUM(t1.saldo_movimentacao) as saldo_movimentacao,
+CASE
+    WHEN t1.sexo = '1' THEN 'Masculino'
+    WHEN t1.sexo = '2' THEN 'Feminino'
+    ELSE 'Indefinido'
+END AS sexo
+FROM caged_prefeituras t1
+JOIN municipio t2 ON t1.id_municipio = t2.id_municipio
+WHERE t2.municipio = :municipio AND t1.ano IN :lista_anos
+GROUP BY t1.ano,
+         t1.mes,
+         t2.municipio,
+         sexo
+"""
+
 QUERY_EXP_ANUAL = """
 -- CTE 1: Agrega os dados por ano e municipio.
 WITH tabDadosAnuais AS (
@@ -248,4 +316,239 @@ FROM seguranca t1
 JOIN populacao t2 ON t1.ano = t2.ano AND t1.municipio = t2.municipio
 JOIN pop_feminina t3 ON t1.ano = t3.ano AND t1.municipio = t3.municipio
 WHERE t1.municipio IN :lista_municipios AND t1.ano IN :lista_anos
+"""
+
+QUERY_CAD = """
+SELECT 
+    t2.municipio,
+    CAST(t1.ano AS INT) AS ano, 
+    CAST(t1.mes AS INT) AS mes,
+    t1.qtd_fam_pob,
+    t1.qtd_fam_baixa_renda,
+    t1.qtd_fam_acima_meio_sm,
+    t1.total_familias,
+    t1.qtd_fam_ate_meio_sm,
+    t1.total_pessoas
+FROM
+    cadastro_unico t1
+JOIN municipio t2 ON t1.id_municipio = t2.id_municipio
+WHERE
+    t2.municipio IN :lista_municipios AND CAST(t1.ano AS INT) IN :lista_anos
+"""
+
+QUERY_BOLSA_FAMILIA = """
+SELECT t2.municipio,
+       t1.ano,
+       t1.mes,
+       t1.valor_total_beneficio,
+       t1.qtd_beneficiados,
+       (t1.valor_total_beneficio / t1.qtd_beneficiados) AS beneficio_medio
+FROM novo_bolsa_familia AS t1
+JOIN municipio AS t2 on t1.id_municipio = t2.id_municipio
+WHERE
+    t2.municipio IN :lista_municipios AND CAST(t1.ano AS INT) IN :lista_anos
+"""
+
+QUERY_CNPJ_TOTAL = """
+SELECT t2.municipio,
+       t1.ano,
+       t1.mes,
+       SUM(t1.empresas_ativas) AS empresas_ativas
+FROM cnpj AS t1
+JOIN municipio AS t2 on t1.id_municipio = t2.id_municipio
+WHERE
+    t2.municipio IN :lista_municipios AND CAST(t1.ano AS INT) IN :lista_anos
+GROUP BY
+    t2.municipio,
+    t1.ano,
+    t1.mes
+"""
+
+QUERY_CNPJ_CNAE = """
+with cnae_unico AS
+    (SELECT LPAD(cod_grupo::VARCHAR, 3, '0') AS cod_grupo,
+            MIN(grupo) AS grupo,
+            MIN(grupo_ibge) AS grupo_ibge
+     FROM cnae
+     GROUP BY cod_grupo)
+SELECT t2.municipio,
+       t1.ano,
+       t1.mes,
+       t3.grupo,
+       t3.grupo_ibge,
+       SUM(t1.empresas_ativas) as empresas_ativas
+FROM cnpj AS t1
+JOIN municipio AS t2 on t1.id_municipio = t2.id_municipio
+JOIN cnae_unico t3 ON t1.cod_grupo = LPAD(t3.cod_grupo::VARCHAR, 3, '0')
+WHERE t2.municipio = :municipio AND CAST(t1.ano AS INT) IN :lista_anos
+GROUP BY t2.municipio,
+         t1.ano,
+         t1.mes,
+         t3.grupo,
+         t3.grupo_ibge
+"""
+
+QUERY_MEI_TOTAL = """
+SELECT t2.municipio,
+       t1.ano,
+       t1.mes,
+       SUM(t1.empresas_ativas) AS empresas_ativas
+FROM mei AS t1
+JOIN municipio AS t2 on t1.id_municipio = t2.id_municipio
+WHERE
+    t2.municipio IN :lista_municipios AND CAST(t1.ano AS INT) IN :lista_anos
+GROUP BY
+    t2.municipio,
+    t1.ano,
+    t1.mes
+"""
+
+QUERY_MEI_CNAE = """
+with cnae_unico AS
+    (SELECT LPAD(cod_grupo::VARCHAR, 3, '0') AS cod_grupo,
+            MIN(grupo) AS grupo,
+            MIN(grupo_ibge) AS grupo_ibge
+     FROM cnae
+     GROUP BY cod_grupo)
+SELECT t2.municipio,
+       t1.ano,
+       t1.mes,
+       t3.grupo,
+       t3.grupo_ibge,
+       SUM(t1.empresas_ativas) as empresas_ativas
+FROM mei AS t1
+JOIN municipio AS t2 on t1.id_municipio = t2.id_municipio
+JOIN cnae_unico t3 ON t1.cod_grupo = LPAD(t3.cod_grupo::VARCHAR, 3, '0')
+WHERE t2.municipio = :municipio AND CAST(t1.ano AS INT) IN :lista_anos
+GROUP BY t2.municipio,
+         t1.ano,
+         t1.mes,
+         t3.grupo,
+         t3.grupo_ibge
+"""
+
+QUERY_EDUCACAO_MATRICULAS = """
+SELECT t1.ano,
+       t2.municipio,
+       t1.dependencia,
+       t1.mat_infantil_creche,
+       t1.mat_basico,
+       t1.mat_infantil,
+       t1.mat_fundamental,
+       t1.mat_medio,
+       t1.mat_profissional,
+       t1.mat_eja,
+       t1.docentes_basico,
+       t1.docentes_infantil,
+       t1.docentes_fundamental,
+       t1.docentes_medio,
+       t1.docentes_profissional,
+       t1.docentes_eja,
+       t1.turmas_basico,
+       t1.turmas_infantil,
+       t1.turmas_fundamental,
+       t1.turmas_medio,
+       t1.turmas_profissional,
+       t1.turmas_eja,
+       t1.qntd_escolas,
+       t1.taxa_matricula_creche
+FROM educacao_matriculas t1
+JOIN municipio t2 ON t1.id_municipio = t2.id_municipio
+WHERE t2.municipio IN :lista_municipios AND t1.ano IN :lista_anos
+"""
+
+QUERY_EDUCACAO_RENDIMENTO = """
+SELECT 
+    t1.ano,
+    t2.municipio,
+    t1.dependencia,
+    t1.taxa_abandono_fundamental,
+    t1.taxa_abandono_fundamental_anos_finais,
+    t1.taxa_abandono_fundamental_anos_iniciais,
+    t1.taxa_aprovacao_fundamental,
+    t1.taxa_aprovacao_fundamental_anos_finais,
+    t1.taxa_aprovacao_fundamental_anos_iniciais,
+    t1.taxa_distorcao_fundamental,
+    t1.taxa_distorcao_fundamental_anos_finais,
+    t1.taxa_distorcao_fundamental_anos_iniciais,
+    t1.taxa_reprovacao_fundamental,
+    t1.taxa_reprovacao_fundamental_anos_finais,
+    t1.taxa_reprovacao_fundamental_anos_iniciais
+FROM educacao_rendimento t1
+JOIN municipio t2 ON t1.id_municipio = t2.id_municipio
+WHERE t2.municipio IN :lista_municipios AND t1.ano IN :lista_anos
+"""
+QUERY_EDUCACAO_RENDIMENTO = """
+SELECT 
+    t1.ano,
+    t2.municipio,
+    t1.dependencia,
+    t1.taxa_abandono_fundamental,
+    t1.taxa_abandono_fundamental_anos_finais,
+    t1.taxa_abandono_fundamental_anos_iniciais,
+    t1.taxa_aprovacao_fundamental,
+    t1.taxa_aprovacao_fundamental_anos_finais,
+    t1.taxa_aprovacao_fundamental_anos_iniciais,
+    t1.taxa_distorcao_fundamental,
+    t1.taxa_distorcao_fundamental_anos_finais,
+    t1.taxa_distorcao_fundamental_anos_iniciais,
+    t1.taxa_reprovacao_fundamental,
+    t1.taxa_reprovacao_fundamental_anos_finais,
+    t1.taxa_reprovacao_fundamental_anos_iniciais
+FROM educacao_rendimento t1
+JOIN municipio t2 ON t1.id_municipio = t2.id_municipio
+WHERE t2.municipio IN :lista_municipios AND t1.ano IN :lista_anos
+"""
+QUERY_EDUCACAO_IDEB_MUNICIPIOS = """
+SELECT
+    t1.ano,
+    t2.municipio,
+    t1.rede AS dependencia,
+    t1.valor,
+    t1.indicador,
+    t1.categoria
+FROM educacao_ideb_municipio t1
+JOIN municipio t2 ON t1.id_municipio = t2.id_municipio
+WHERE t2.municipio IN :lista_municipios
+"""
+QUERY_EDUCACAO_IDEB_ESCOLAS = """
+SELECT
+    t1.ano,
+    t2.municipio,
+    t1.escola,
+    t1.rede AS dependencia,
+    t1.valor,
+    t1.indicador,
+    t1.categoria
+FROM educacao_ideb_escolas t1
+JOIN municipio t2 ON t1.id_municipio = t2.id_municipio
+WHERE t2.municipio IN :lista_municipios
+"""
+
+QUERY_SAUDE_MENSAL = """
+SELECT ano,
+       mes,
+       municipio,
+       internacoes_icsab,
+       internacoes_totais,
+       prop_icsab * 100 AS prop_icsab,
+       nascimentos,
+       prop_nasc_adolesc,
+       obitos,
+       taxa_obitos_infantis,
+       coef_neonatal,
+       nasc_baixo_peso,
+       prop_nasc_baixo_peso,
+       consultas_pre_natal,
+       prop_consultas_pre_natal,
+       obitos_causa_definida,
+       obitos_totais,
+       prop_obitos_causas_definidas * 100 AS prop_obitos_causas_definidas,
+       obitos_causa_nao_definida,
+       notificacoes_acidentes_trab,
+       populacao,
+       "nascimentos/1000_hab",
+       taxa_acidentes_trab
+FROM saude
+WHERE municipio IN :lista_municipios AND ano IN :lista_anos
 """

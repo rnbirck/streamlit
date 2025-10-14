@@ -14,11 +14,26 @@ from concurrent.futures import ThreadPoolExecutor
 from src.queries import (
     QUERY_EMPREGO_MUNICIPIOS,
     QUERY_EMPREGO_CNAE,
+    QUERY_EMPREGO_GRAU_INSTRUCAO,
+    QUERY_EMPREGO_FAIXA_ETARIA,
+    QUERY_EMPREGO_RACA_COR,
+    QUERY_EMPREGO_SEXO,
     QUERY_EXP_ANUAL,
     QUERY_EXP_MENSAL,
     QUERY_EXP_MUN_SELECIONADO,
     QUERY_SEGURANCA,
     QUERY_SEGURANCA_TAXA,
+    QUERY_CAD,
+    QUERY_BOLSA_FAMILIA,
+    QUERY_CNPJ_TOTAL,
+    QUERY_CNPJ_CNAE,
+    QUERY_MEI_TOTAL,
+    QUERY_MEI_CNAE,
+    QUERY_EDUCACAO_MATRICULAS,
+    QUERY_EDUCACAO_RENDIMENTO,
+    QUERY_EDUCACAO_IDEB_MUNICIPIOS,
+    QUERY_EDUCACAO_IDEB_ESCOLAS,
+    QUERY_SAUDE_MENSAL,
 )
 
 from src.config import (
@@ -80,6 +95,7 @@ def atualizar_gsheet_com_df(gspread_config, df, sheet_name):
         print(f"ERRO ao atualizar a planilha '{sheet_name}': {e}")
 
 
+# %%
 atualizar_google_sheet(
     gspread_config,
     engine,
@@ -96,6 +112,50 @@ atualizar_google_sheet(
     engine,
     QUERY_EMPREGO_CNAE,
     "dados_emprego_cnae",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_EMPREGO_GRAU_INSTRUCAO,
+    "dados_emprego_grau_instrucao",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_EMPREGO_FAIXA_ETARIA,
+    "dados_emprego_faixa_etaria",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_EMPREGO_RACA_COR,
+    "dados_emprego_raca_cor",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_EMPREGO_SEXO,
+    "dados_emprego_sexo",
     params={
         "municipio": municipio_de_interesse,
         "lista_anos": tuple(anos_de_interesse),
@@ -155,6 +215,124 @@ atualizar_google_sheet(
     },
 )
 
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_CAD,
+    "dados_cadastro_unico",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_BOLSA_FAMILIA,
+    "dados_bolsa_familia",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_CNPJ_TOTAL,
+    "dados_cnpj_total",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_CNPJ_CNAE,
+    "dados_cnpj_cnae",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_MEI_TOTAL,
+    "dados_mei_total",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_MEI_CNAE,
+    "dados_mei_cnae",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_EDUCACAO_MATRICULAS,
+    "dados_educacao_matriculas",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_EDUCACAO_RENDIMENTO,
+    "dados_educacao_rendimento",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_EDUCACAO_IDEB_MUNICIPIOS,
+    "dados_educacao_ideb_municipios",
+    params={"lista_municipios": tuple(municipios_de_interesse)},
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_EDUCACAO_IDEB_ESCOLAS,
+    "dados_educacao_ideb_escolas",
+    params={"lista_municipios": tuple(municipios_de_interesse)},
+)
+# %%
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_SAUDE_MENSAL,
+    "dados_saude_mensal",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+# %%
 # --- FUNÇÃO PARA COLETAR DADOS DO SICONFI ---
 
 id_municipios = pd.read_sql(
