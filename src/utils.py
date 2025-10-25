@@ -30,6 +30,15 @@ BIMESTRE_DIC = {
     6: "Dezembro",
 }
 
+BIMESTRE_MAP = {
+    1: "Jan-Fev",
+    2: "Mar-Abr",
+    3: "Mai-Jun",
+    4: "Jul-Ago",
+    5: "Set-Out",
+    6: "Nov-Dez",
+}
+
 
 def manter_posicao_scroll():
     """
@@ -229,6 +238,92 @@ def criar_grafico_barras(
     return fig
 
 
+def criar_grafico_linhas(
+    df,
+    titulo,
+    label_y,
+    height=500,
+    data_label_format=",.2f",
+    hover_label_format=",.2f",
+    color_map=None,
+    reverse_y: bool = False,  # <-- MUDANÇA 1: Novo parâmetro
+):
+    """
+    Cria um gráfico de linhas customizado e reutilizável com Plotly Express.
+    """
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = [" - ".join(map(str, col)).strip() for col in df.columns.values]
+
+    index_name = df.index.name if df.index.name is not None else "index"
+    df_reset = df.reset_index()
+    index_name = df_reset.columns[0]
+
+    df_long = df_reset.melt(id_vars=index_name, var_name="series", value_name="value")
+
+    df_long["hover_value_formatted"] = df_long["value"].apply(
+        lambda x: f"{x:{hover_label_format}}".replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
+    )
+    df_long["data_label_formatted"] = df_long["value"].apply(
+        lambda x: f"{x:{data_label_format}}".replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
+    )
+
+    fig = px.line(
+        df_long,
+        x=index_name,
+        y="value",
+        color="series",
+        text=df_long["data_label_formatted"],
+        labels={"value": label_y, index_name: "", "series": ""},
+        height=height,
+        custom_data=["hover_value_formatted", "data_label_formatted"],
+        color_discrete_map=color_map,
+        markers=True,
+    )
+
+    xaxis_config = {"type": "category"}
+
+    yaxis_config = {}
+    if reverse_y:
+        yaxis_config["autorange"] = "reversed"
+
+    fig.update_layout(
+        margin=dict(t=50),
+        title_text=titulo,
+        title_font_size=20,
+        xaxis_title="",
+        xaxis=xaxis_config,
+        yaxis=yaxis_config,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1,
+            xanchor="left",
+            x=0,
+            title="",
+            font=dict(size=15),
+        ),
+        uniformtext_minsize=8,
+        uniformtext_mode="hide",
+    )
+
+    fig.update_traces(
+        texttemplate="%{text}",
+        textposition="top center",
+        textfont=dict(size=10, color="white"),
+        hovertemplate=(
+            "<b>%{fullData.name}</b><br>"
+            f"<b>{index_name.title()}</b>: %{{x}}<br>"
+            "<b>Valor</b>: %{customdata[0]}"
+            "<extra></extra>"
+        ),
+    )
+    return fig
+
+
 @st.cache_data
 def criar_tabela_formatada(df, index_col, ult_ano, ult_mes):
     """Cria uma tabela formatada para exibição no Streamlit."""
@@ -364,3 +459,43 @@ def criar_tabela_comex(df, colunas_agg, colunas_finais, anos_selecionados):
         .replace([np.inf, -np.inf], np.nan)[colunas_originais]
         .set_axis(colunas_resultado, axis=1)
     )
+
+
+def formatador_pt_br(valor):
+    """Formata um número para o padrão brasileiro (ex: 1.234,56)."""
+    try:
+        # Especificador de formato para duas casas decimais com separador de milhar
+        formato_spec = ",.1f"
+        s = f"{float(valor):{formato_spec}}"
+        # Inverte os separadores para o padrão brasileiro
+        return s.replace(",", "TEMP").replace(".", ",").replace("TEMP", ".")
+    except (ValueError, TypeError):
+        return valor  # Retorna o valor original se não for numérico
+
+
+def criar_formatador_final(tipo, formatador_base):
+    """
+    Cria a função de formatação final, adicionando o prefixo 'R$'
+    quando necessário.
+    """
+    if tipo == "Remuneração Nominal (R$)":
+        # Define uma função aninhada para o formato com prefixo
+        def formatador_nominal(x):
+            return f"R$ {formatador_base(x)}"
+
+        return formatador_nominal
+    else:
+        # Retorna a função base se não precisar de prefixo
+        return formatador_base
+
+
+@st.cache_data
+def preparar_dados_graficos_anuais(df_filtrado, coluna_agregacao, coluna_valores):
+    df = df_filtrado.pivot_table(
+        index="ano",
+        columns=coluna_agregacao,
+        values=coluna_valores,
+        aggfunc="sum",
+        fill_value=0,
+    ).sort_index()
+    return df

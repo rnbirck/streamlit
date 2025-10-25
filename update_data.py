@@ -3,21 +3,29 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 import json
 from gspread_pandas import Spread
-from datetime import datetime
 import os
 from dotenv import load_dotenv
-import requests
-import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor
 
 
 from src.queries import (
     QUERY_EMPREGO_MUNICIPIOS,
+    QUERY_VINCULOS_MUNICIPIOS,
     QUERY_EMPREGO_CNAE,
+    QUERY_VINCULOS_CNAE,
     QUERY_EMPREGO_GRAU_INSTRUCAO,
+    QUERY_VINCULOS_GRAU_INSTRUCAO,
     QUERY_EMPREGO_FAIXA_ETARIA,
+    QUERY_VINCULOS_FAIXA_ETARIA,
     QUERY_EMPREGO_RACA_COR,
+    QUERY_VINCULOS_RACA_COR,
     QUERY_EMPREGO_SEXO,
+    QUERY_VINCULOS_SEXO,
+    QUERY_RENDA_SEXO,
+    QUERY_RENDA_MUNICIPIOS,
+    QUERY_RENDA_CNAE,
+    QUERY_ESTABELECIMENTOS_MUNICIPIOS,
+    QUERY_ESTABELECIMENTOS_CNAE,
+    QUERY_ESTABELECIMENTOS_TAMANHO,
     QUERY_EXP_ANUAL,
     QUERY_EXP_MENSAL,
     QUERY_EXP_MUN_SELECIONADO,
@@ -34,6 +42,15 @@ from src.queries import (
     QUERY_EDUCACAO_IDEB_MUNICIPIOS,
     QUERY_EDUCACAO_IDEB_ESCOLAS,
     QUERY_SAUDE_MENSAL,
+    QUERY_SAUDE_DESPESAS,
+    QUERY_SAUDE_LEITOS,
+    QUERY_SAUDE_MEDICOS,
+    QUERY_SAUDE_VACINAS,
+    QUERY_PIB_MUNICIPIOS,
+    QUERY_POP_SEXO_IDADE,
+    QUERY_POP_TOTAL_DENSIDADE,
+    QUERY_FINANCAS,
+    QUERY_INDICADORES_FINANCEIROS,
 )
 
 from src.config import (
@@ -95,7 +112,9 @@ def atualizar_gsheet_com_df(gspread_config, df, sheet_name):
         print(f"ERRO ao atualizar a planilha '{sheet_name}': {e}")
 
 
-# %%
+# ATUALIZACAO MENSAL
+
+
 atualizar_google_sheet(
     gspread_config,
     engine,
@@ -192,7 +211,6 @@ atualizar_google_sheet(
     params={"municipio": municipio_de_interesse, "lista_anos": tuple(anos_comex)},
 )
 
-
 atualizar_google_sheet(
     gspread_config,
     engine,
@@ -225,6 +243,7 @@ atualizar_google_sheet(
         "lista_anos": tuple(anos_de_interesse),
     },
 )
+
 atualizar_google_sheet(
     gspread_config,
     engine,
@@ -235,7 +254,6 @@ atualizar_google_sheet(
         "lista_anos": tuple(anos_de_interesse),
     },
 )
-
 
 atualizar_google_sheet(
     gspread_config,
@@ -259,7 +277,6 @@ atualizar_google_sheet(
     },
 )
 
-
 atualizar_google_sheet(
     gspread_config,
     engine,
@@ -271,7 +288,6 @@ atualizar_google_sheet(
     },
 )
 
-
 atualizar_google_sheet(
     gspread_config,
     engine,
@@ -282,6 +298,207 @@ atualizar_google_sheet(
         "lista_anos": tuple(anos_de_interesse),
     },
 )
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_SAUDE_MENSAL,
+    "dados_saude_mensal",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_FINANCAS,
+    "dados_financas",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+# %%
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_INDICADORES_FINANCEIROS,
+    "dados_indicadores_financeiros",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+# %%
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_POP_TOTAL_DENSIDADE,
+    "dados_populacao_densidade",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_POP_SEXO_IDADE,
+    "dados_populacao_sexo_idade",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_VINCULOS_MUNICIPIOS,
+    "dados_vinculos_municipios",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+# %%
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_VINCULOS_CNAE,
+    "dados_vinculos_cnae",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_VINCULOS_GRAU_INSTRUCAO,
+    "dados_vinculos_grau_instrucao",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_VINCULOS_FAIXA_ETARIA,
+    "dados_vinculos_faixa_etaria",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_VINCULOS_RACA_COR,
+    "dados_vinculos_raca_cor",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_VINCULOS_SEXO,
+    "dados_vinculos_sexo",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_RENDA_SEXO,
+    "dados_renda_sexo",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_RENDA_MUNICIPIOS,
+    "dados_renda_municipios",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_RENDA_CNAE,
+    "dados_renda_cnae",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+# %%
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_ESTABELECIMENTOS_MUNICIPIOS,
+    "dados_estabelecimentos_municipios",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+# %%
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_ESTABELECIMENTOS_CNAE,
+    "dados_estabelecimentos_cnae",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_ESTABELECIMENTOS_TAMANHO,
+    "dados_estabelecimentos_tamanho",
+    params={
+        "municipio": municipio_de_interesse,
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
+
+# %%
 
 atualizar_google_sheet(
     gspread_config,
@@ -320,140 +537,58 @@ atualizar_google_sheet(
     "dados_educacao_ideb_escolas",
     params={"lista_municipios": tuple(municipios_de_interesse)},
 )
+
 # %%
 atualizar_google_sheet(
     gspread_config,
     engine,
-    QUERY_SAUDE_MENSAL,
-    "dados_saude_mensal",
+    QUERY_SAUDE_VACINAS,
+    "dados_saude_vacinas",
     params={
         "lista_municipios": tuple(municipios_de_interesse),
         "lista_anos": tuple(anos_de_interesse),
     },
 )
 
-# %%
-# --- FUNÇÃO PARA COLETAR DADOS DO SICONFI ---
-
-id_municipios = pd.read_sql(
-    text(
-        "SELECT id_municipio, municipio FROM municipio WHERE municipio IN :lista_municipios"
-    ),
+atualizar_google_sheet(
+    gspread_config,
     engine,
-    params={"lista_municipios": tuple(municipios_de_interesse)},
+    QUERY_SAUDE_DESPESAS,
+    "dados_saude_despesas",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
 )
 
-print("\nColetando dados do SICONFI...")
-
-
-def coletar_rreo(
-    co_esfera,
-    co_tipo_demonstrativo,
-    anos,
-    periodos,
-    trad_mun,
-    max_workers=20,
-):
-    """
-    Coleta dados do RREO de forma flexível para diferentes periodicidades.
-
-    Parâmetros:
-    - co_tipo_demonstrativo: str (ex: 'RREO' ou 'RREO Simplificado')
-    - periodicidade: str ('Q' ou 'S')
-    - anos: list[int] (ex: [2021, 2022, 2023])
-    - trad_mun: DataFrame com id_municipio e municipio
-    - max_workers: int (número de threads para paralelismo)
-
-    Retorna:
-    - DataFrame consolidado com os dados
-    """
-
-    colunasInteresse = ["No Bimestre (b)", "Até o Bimestre (c)"]
-    codContasInteresse = [
-        "Impostos",
-        "ReceitasCorrentes",
-        "TransferenciasCorrentes",
-        "TotalReceitas",
-    ]
-    # Gerar lista de tarefas
-    tasks = [
-        (row["id_municipio"], ano, periodo)
-        for _, row in trad_mun.iterrows()
-        for ano in anos
-        for periodo in periodos
-    ]
-
-    # Função interna para buscar dados
-    def fetch_data(task):
-        id_ente, ano, periodo = task
-        url = (
-            f"https://apidatalake.tesouro.gov.br/ords/siconfi/tt//rreo?"
-            f"an_exercicio={ano}&"
-            f"nr_periodo={periodo}&co_tipo_demonstrativo={co_tipo_demonstrativo}&"
-            f"co_esfera={co_esfera}&id_ente={id_ente}"
-        )
-
-        try:
-            response = requests.get(url, timeout=15)
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("items"):
-                    df = pd.DataFrame(data["items"])
-                    df["id_ente"] = id_ente
-                    return df
-            else:
-                print(f"Erro {response.status_code} em {id_ente}-{ano}-{periodo}")
-        except Exception as e:
-            print(f"Falha em {id_ente}-{ano}-{periodo}: {str(e)}")
-
-        return pd.DataFrame()
-
-    # Executar requisições
-    df_list = []
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(fetch_data, task) for task in tasks]
-        for future in concurrent.futures.as_completed(futures):
-            df = future.result()
-            if not df.empty:
-                df_list.append(df)
-
-    # Consolidar e mergear com municípios
-    if df_list:
-        df_final = pd.concat(df_list, ignore_index=True)
-        df_final = df_final.merge(
-            trad_mun[["id_municipio", "municipio"]],
-            left_on="id_ente",
-            right_on="id_municipio",
-            how="left",
-        )
-        df_final = df_final[
-            (df_final["cod_conta"].isin(codContasInteresse))
-            & (df_final["coluna"].isin(colunasInteresse))
-        ]
-        colunas_para_retornar = [
-            "municipio",
-            "exercicio",
-            "periodo",
-            "coluna",
-            "cod_conta",
-            "conta",
-            "valor",
-        ]
-        return df_final[colunas_para_retornar]
-    else:
-        return pd.DataFrame()
-
-
-df_rreo = coletar_rreo(
-    co_esfera="M",
-    co_tipo_demonstrativo="RREO",
-    anos=anos_de_interesse,
-    periodos=range(1, 7),  # Períodos de 1 a 6 (bimestral)
-    trad_mun=id_municipios,
-    max_workers=20,
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_SAUDE_LEITOS,
+    "dados_saude_leitos",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
 )
-atualizar_gsheet_com_df(gspread_config, df_rreo, "dados_siconfi_rreo")
 
-print(f"\nProcesso concluído em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}!")
-
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_SAUDE_MEDICOS,
+    "dados_saude_medicos",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+        "lista_anos": tuple(anos_de_interesse),
+    },
+)
 # %%
+atualizar_google_sheet(
+    gspread_config,
+    engine,
+    QUERY_PIB_MUNICIPIOS,
+    "dados_pib_municipios",
+    params={
+        "lista_municipios": tuple(municipios_de_interesse),
+    },
+)

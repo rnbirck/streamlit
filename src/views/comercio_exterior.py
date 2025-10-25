@@ -210,19 +210,34 @@ def display_comex_municipios_expander(df_mes):
         anos_disponiveis = sorted(df_filtrado["ano"].unique().tolist(), reverse=True)
 
         with tab_hist:
-            ANO_SELECIONADO = st.selectbox(
-                "Selecione o ano para o gráfico:",
-                options=anos_disponiveis,
-                index=0,
-                key="hist_ano_comex",
-            )
+            col1, col2 = st.columns([0.5, 0.5])
+            with col1:
+                ANO_SELECIONADO = st.selectbox(
+                    "Selecione o ano para o gráfico:",
+                    options=anos_disponiveis,
+                    index=0,
+                    key="hist_ano_comex",
+                )
+
             df_comex_hist_filtrado_ano = df_comex_hist[
                 df_comex_hist.index.year == ANO_SELECIONADO
             ]
 
+            if not df_comex_hist_filtrado_ano.empty:
+                df_comex_hist_filtrado_ano.index = [
+                    f"{MESES_DIC[date.month][:3]}/{str(date.year)[2:]}"
+                    for date in df_comex_hist_filtrado_ano.index
+                ]
+
             df_comex_hist_perc_filtrado_ano = df_comex_hist_perc[
                 df_comex_hist_perc.index.year == ANO_SELECIONADO
             ]
+
+            if not df_comex_hist_perc_filtrado_ano.empty:
+                df_comex_hist_perc_filtrado_ano.index = [
+                    f"{MESES_DIC[date.month][:3]}/{str(date.year)[2:]}"
+                    for date in df_comex_hist_perc_filtrado_ano.index
+                ]
 
             if not ANO_SELECIONADO:
                 st.warning("Por favor, selecione ao menos um ano.")
@@ -233,7 +248,7 @@ def display_comex_municipios_expander(df_mes):
                 label_y="(Milhões de US$)",
                 barmode="group",
                 height=450,
-                data_label_format=".1f",
+                data_label_format=",.1f",
                 hover_label_format=",.2f",
                 color_map=CORES_MUNICIPIOS,
             )
@@ -244,18 +259,18 @@ def display_comex_municipios_expander(df_mes):
                 label_y="Variação em relação ao mesmo mês do ano anterior (%)",
                 barmode="group",
                 height=450,
-                data_label_format=".1f",
+                data_label_format=",.1f",
                 hover_label_format=",.2f",
                 color_map=CORES_MUNICIPIOS,
             )
 
-            view_mode = st.radio(
-                "Selecione o modo de Visualização:",
-                options=["Valor (Milhões de US$)", "Variação YoY (%)"],
-                horizontal=True,
-                label_visibility="collapsed",
-                key="view_mode_comex_municipios_hist",
-            )
+            with col2:
+                view_mode = st.radio(
+                    "Selecione o modo de Visualização:",
+                    options=["Valor (Milhões de US$)", "Variação YoY (%)"],
+                    horizontal=True,
+                    key="view_mode_comex_municipios_hist",
+                )
 
             if view_mode == "Valor (Milhões de US$)":
                 titulo_centralizado(f"Exportações em {ANO_SELECIONADO}", 5)
@@ -264,7 +279,8 @@ def display_comex_municipios_expander(df_mes):
             elif view_mode == "Variação YoY (%)":
                 if fig_hist_perc:
                     titulo_centralizado(
-                        f"Variação Percentual das Exportações em {ANO_SELECIONADO}", 5
+                        f"Variação Percentual (YoY) das Exportações em {ANO_SELECIONADO}",
+                        5,
                     )
 
                     st.plotly_chart(fig_hist_perc, use_container_width=True)
@@ -284,7 +300,7 @@ def display_comex_municipios_expander(df_mes):
                 label_y="(Milhões de US$)",
                 barmode="group",
                 height=450,
-                data_label_format=".1f",
+                data_label_format=",.1f",
                 hover_label_format=",.2f",
                 color_map=CORES_MUNICIPIOS,
             )

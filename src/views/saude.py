@@ -71,6 +71,18 @@ def preparar_dados_graficos_saude_mensal(
     return df_hist, df_acum, df_anual, ult_ano, ult_mes
 
 
+def preparar_dados_graficos_saude_anual(df_filtrado, coluna_selecionada):
+    df_anual = df_filtrado.pivot_table(
+        index="ano",
+        columns="municipio",
+        values=coluna_selecionada,
+        aggfunc="sum",
+        fill_value=0,
+    ).sort_index(ascending=False)
+
+    return df_anual
+
+
 def display_saude_expander(
     df_filtrado, titulo_expander, dicionario_indicadores, key_prefix
 ):
@@ -136,7 +148,7 @@ def display_saude_expander(
                     hover_label_format=hover_format,
                     color_map=CORES_MUNICIPIOS,
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
         if ult_mes:
             with tab_acum:
@@ -160,7 +172,7 @@ def display_saude_expander(
                     hover_label_format=hover_format,
                     color_map=CORES_MUNICIPIOS,
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
         with tab_anual:
             titulo_centralizado(f"{indicador_selecionado} - Análise Anual", 5)
@@ -174,7 +186,48 @@ def display_saude_expander(
                 hover_label_format=hover_format,
                 color_map=CORES_MUNICIPIOS,
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
+
+
+def display_saude_anual_expander(
+    df_filtrado, titulo_expander, dicionario_indicadores, key_prefix
+):
+    with st.expander(titulo_expander, expanded=False):
+        indicador_selecionado = st.selectbox(
+            "Selecione um indicador para visualizar:",
+            options=list(dicionario_indicadores.keys()),
+            key=f"{key_prefix}_selectbox",
+        )
+
+        coluna_selecionada, label_y, data_format = dicionario_indicadores[
+            indicador_selecionado
+        ]
+
+        hover_format = (
+            f",.{int(data_format.split('.')[-1][0]) + 1}f"
+            if "." in data_format
+            else ",.0f"
+        )
+
+        df_anual = preparar_dados_graficos_saude_anual(
+            df_filtrado=df_filtrado, coluna_selecionada=coluna_selecionada
+        )
+        titulo_centralizado(
+            f"{indicador_selecionado}",
+            5,
+        )
+
+        fig = criar_grafico_barras(
+            df=df_anual,
+            titulo="",
+            label_y=label_y,
+            barmode="group",
+            height=450,
+            data_label_format=data_format,
+            hover_label_format=hover_format,
+            color_map=CORES_MUNICIPIOS,
+        )
+        st.plotly_chart(fig, width="stretch")
 
 
 # ==============================================================================
@@ -182,7 +235,13 @@ def display_saude_expander(
 # ==============================================================================
 
 
-def show_page_saude(df_saude_mensal):
+def show_page_saude(
+    df_saude_mensal,
+    df_saude_vacinas,
+    df_saude_despesas,
+    df_saude_leitos,
+    df_saude_medicos,
+):
     titulo_centralizado("Dashboard de Saúde", 1)
     titulo_centralizado("Clique nos menus abaixo para explorar os dados", 5)
 
@@ -284,8 +343,81 @@ def show_page_saude(df_saude_mensal):
         ),
     }
 
+    INDICADORES_DESPESAS = {
+        "Despesa Total com Saúde em milhões (R$) - Valores Reais": (
+            "despesa_saude_deflacionada",
+            "Despesa",
+            ",.0f",
+        ),
+        "Despesa Per Capita com Saúde - Valores Reais": (
+            "despesa_per_capita_deflacionada",
+            "Despesa per capita",
+            ",.0f",
+        ),
+        "Percentual das Despesas em Saúde sobre a Arrecadação Municipal (%)": (
+            "percental_gastos_saude",
+            "Percentual",
+            ",.2f",
+        ),
+    }
+
+    INDICADORES_VACINAS = {
+        "Número de Doses Aplicadas": (
+            "doses_total",
+            "Núm. de Doses",
+            ",.0f",
+        ),
+        "Cobertura vacinal da Pentavalente (DTP+HB+Hib) (Penta) (%)": (
+            "cobertura_penta",
+            "Cobertura (%)",
+            ",.1f",
+        ),
+        "Cobertura vacinal contra Meningococo (%)": (
+            "cobertura_meningococo",
+            "Cobertura (%)",
+            ",.1f",
+        ),
+        "Cobertura vacinal contra Poliomielite (%)": (
+            "cobertura_poliomielite",
+            "Cobertura (%)",
+            ",.1f",
+        ),
+        "Cobertura vacinal da 1ª dose da Tríplice Viral (SCR) (%)": (
+            "cobertura_triplice_viral_d1",
+            "Cobertura (%)",
+            ",.1f",
+        ),
+    }
+
+    INDICADORES_MEDICOS = {
+        "Número de Médicos que atendem pelo SUS": (
+            "qtd_medicos_sus",
+            "Núm. de Médicos",
+            ",.0f",
+        ),
+        "Número de Médicos que atendem pelo SUS por mil habitantes": (
+            "qtd_medicos_sus_mil_hab",
+            "Núm. de Médicos por mil hab.",
+            ",.2f",
+        ),
+    }
+
+    INDICADORES_LEITOS = {
+        "Número de Leitos de Internação e Complementares disponíveis pelo SUS": (
+            "qtd_leitos_sus",
+            "Núm. de Leitos",
+            ",.0f",
+        ),
+        "Número de Leitos disponíveis pelo SUS por mil habitantes": (
+            "qtd_leitos_sus_mil_hab",
+            "Núm. de Leitos por mil hab.",
+            ",.2f",
+        ),
+    }
+
     # --- CHAMADAS PARA OS EXPANDERS ---
-    with st.expander("Indicadores de Saúde Mensal", expanded=True):
+    with st.expander("Indicadores Mensais de Saúde", expanded=True):
+        st.markdown("###### Indicadores de Saúde com atualização mensal")
         display_saude_expander(
             df_filtrado=df_saude_mensal,
             titulo_expander="Indicadores de Óbitos",
@@ -319,4 +451,31 @@ def show_page_saude(df_saude_mensal):
             titulo_expander="Acidentes e Doenças Relacionadas ao Trabalho",
             dicionario_indicadores=INDICADORES_ACIDENTE_DE_TRABALHO,
             key_prefix="acidente_trabalho",
+        )
+
+    with st.expander("Indicadores Anuais de Saúde", expanded=True):
+        st.markdown("###### Indicadores de Saúde com atualização anual")
+        display_saude_anual_expander(
+            df_filtrado=df_saude_despesas,
+            titulo_expander="Despesas com Saúde",
+            dicionario_indicadores=INDICADORES_DESPESAS,
+            key_prefix="despesas",
+        )
+        display_saude_anual_expander(
+            df_filtrado=df_saude_vacinas,
+            titulo_expander="Imunização",
+            dicionario_indicadores=INDICADORES_VACINAS,
+            key_prefix="vacinas",
+        )
+        display_saude_anual_expander(
+            df_filtrado=df_saude_medicos,
+            titulo_expander="Médicos no SUS",
+            dicionario_indicadores=INDICADORES_MEDICOS,
+            key_prefix="medicos",
+        )
+        display_saude_anual_expander(
+            df_filtrado=df_saude_leitos,
+            titulo_expander="Leitos de Internação e Complementares no SUS",
+            dicionario_indicadores=INDICADORES_LEITOS,
+            key_prefix="leitos",
         )

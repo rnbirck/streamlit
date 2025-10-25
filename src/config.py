@@ -29,3 +29,15 @@ ordem_instrucao = [
     "Pós-Graduação ou Mestrado",
     "Doutorado",
 ]
+
+ordem_tamanho_estabelecimentos = [
+    "De 1 a 4",
+    "De 5 a 9",
+    "De 10 a 19",
+    "De 20 a 49",
+    "De 50 a 99",
+    "De 100 a 249",
+    "De 250 a 499",
+    "De 500 a 999",
+    "1000 ou Mais",
+]

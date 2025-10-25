@@ -7,15 +7,14 @@ from src.utils import (
     calcular_yoy,
     filtrar_municipio_ult_mes_ano,
     criar_grafico_barras,
-    criar_tabela_formatada,
+    preparar_dados_graficos_anuais,
 )
 
 from src.config import (
     municipio_de_interesse,
-    anos_de_interesse,
     CORES_MUNICIPIOS,
+    ordem_tamanho_estabelecimentos,
 )
-
 
 # ==============================================================================
 # FUNÇÕES DA PÁGINA DE EMPRESAS ATIVAS
@@ -182,7 +181,7 @@ def display_empresas_ativas_expander(df, df_cnae, titulo_expander, key_prefix):
                 hover_label_format=",.0f",
                 color_map=CORES_MUNICIPIOS,
             )
-            st.plotly_chart(fig_total, use_container_width=True)
+            st.plotly_chart(fig_total, width="stretch")
 
         with tab_setor:
             titulo_centralizado(
@@ -199,7 +198,7 @@ def display_empresas_ativas_expander(df, df_cnae, titulo_expander, key_prefix):
                 hover_label_format=",.0f",
                 color_map=CORES_MUNICIPIOS,
             )
-            st.plotly_chart(fig_setor, use_container_width=True)
+            st.plotly_chart(fig_setor, width="stretch")
 
         with tab_cnae:
             colunas_do_ano = [
@@ -220,8 +219,129 @@ def display_empresas_ativas_expander(df, df_cnae, titulo_expander, key_prefix):
             st.dataframe(tab_cnae, width="stretch")
 
 
+def render_estabelecimentos_grafico_tab(
+    df, coluna_agregacao, titulo_grafico, color_map=None, reorder_cols=None
+):
+    """
+    Função auxiliar para renderizar uma aba de Estabelecimentos com gráfico.
+    """
+    titulo_centralizado(titulo_grafico, 5)
+
+    df_grafico = preparar_dados_graficos_anuais(
+        df_filtrado=df,
+        coluna_agregacao=coluna_agregacao,
+        coluna_valores="qntd_estabelecimentos",
+    )
+
+    if reorder_cols and not df_grafico.empty:
+        df_grafico = df_grafico.reindex(columns=reorder_cols, fill_value=0)
+
+    fig = criar_grafico_barras(
+        df=df_grafico,
+        titulo="",
+        label_y="Nº de Estabelecimentos",
+        color_map=color_map,
+        data_label_format=",.0f",
+        hover_label_format=",.0f",
+    )
+    st.plotly_chart(fig, width="stretch")
+
+
+def render_estabelecimentos_tabela_tab(df, index_col, titulo, municipio_interesse):
+    """
+    Função auxiliar para renderizar uma aba de Estabelecimentos com tabela (CNAE).
+    """
+    titulo_centralizado(f"{titulo} em {municipio_interesse}", 5)
+
+    ult_ano = df["ano"].max()
+
+    df_agrupado = (
+        df.groupby(["ano", index_col])["qntd_estabelecimentos"].sum().reset_index()
+    )
+
+    df_pivot = df_agrupado.pivot_table(
+        index=index_col,
+        columns="ano",
+        values="qntd_estabelecimentos",
+        aggfunc="sum",
+        fill_value=0,
+    ).sort_values(by=ult_ano, ascending=False)
+
+    df_pivot.index.name = titulo.split(" por ")[-1]  # Ex: "CNAE - Grupo"
+
+    st.dataframe(
+        df_pivot.style.format("{:,.0f}").background_gradient(cmap="GnBu"),
+        width="stretch",
+    )
+
+
+def display_estabelecimentos(
+    df_estabelecimentos_mun,
+    df_estabelecimentos_cnae,
+    df_estabelecimentos_tamanho,
+    municipio_interesse,
+    color_map=None,
+):
+    """Exibe o expander com a análise de Estabelecimentos."""
+    with st.expander("Estabelecimentos", expanded=False):
+        tabs = st.tabs(
+            ["Município", "Tamanho", "Setor", "CNAE - Grupo", "CNAE - Subclasse"]
+        )
+
+        # Aba 0: Comparativo entre Municípios
+        with tabs[0]:
+            render_estabelecimentos_grafico_tab(
+                df=df_estabelecimentos_mun,
+                coluna_agregacao="municipio",
+                titulo_grafico="Quantidade de Estabelecimentos por Município",
+                color_map=color_map,
+            )
+
+        # Aba 1: Análise por Tamanho do Estabelecimento
+        with tabs[1]:
+            render_estabelecimentos_grafico_tab(
+                df=df_estabelecimentos_tamanho,
+                coluna_agregacao="tamanho_estabelecimento",
+                titulo_grafico=f"Quantidade de Estabelecimentos por Número de Funcionários em {municipio_interesse}",
+                reorder_cols=ordem_tamanho_estabelecimentos,
+            )
+
+        # Aba 2: Análise por Setor Econômico
+        with tabs[2]:
+            render_estabelecimentos_grafico_tab(
+                df=df_estabelecimentos_cnae,
+                coluna_agregacao="grupo_ibge",
+                titulo_grafico=f"Quantidade de Estabelecimentos por Setor em {municipio_interesse}",
+            )
+
+        # Aba 3: Tabela por CNAE - Grupo
+        with tabs[3]:
+            render_estabelecimentos_tabela_tab(
+                df=df_estabelecimentos_cnae,
+                index_col="grupo",
+                titulo="Quantidade de Estabelecimentos por CNAE - Grupo",
+                municipio_interesse=municipio_interesse,
+            )
+
+        # Aba 4: Tabela por CNAE - Subclasse
+        with tabs[4]:
+            render_estabelecimentos_tabela_tab(
+                df=df_estabelecimentos_cnae,
+                index_col="subclasse",
+                titulo="Quantidade de Estabelecimentos por CNAE - Subclasse",
+                municipio_interesse=municipio_interesse,
+            )
+
+
 def show_page_empresas_ativas(
-    df_cnpj, df_cnpj_cnae, df_mei, df_mei_cnae, municipio_de_interesse
+    df_cnpj,
+    df_cnpj_cnae,
+    df_mei,
+    df_mei_cnae,
+    municipio_de_interesse,
+    df_estabelecimentos_mun,
+    df_estabelecimentos_cnae,
+    df_estabelecimentos_tamanho,
 ):
     titulo_centralizado("Dashboard de Empresas Ativas", 1)
     display_cnpj_kpi_cards(
@@ -239,4 +359,12 @@ def show_page_empresas_ativas(
         df_cnae=df_mei_cnae,
         titulo_expander="MEI / Simples Ativos",
         key_prefix="mei_ativos",
+    )
+    st.markdown("###### Dados disponibilizados pela RAIS - Atualização Anual")
+    display_estabelecimentos(
+        df_estabelecimentos_mun=df_estabelecimentos_mun,
+        df_estabelecimentos_cnae=df_estabelecimentos_cnae,
+        df_estabelecimentos_tamanho=df_estabelecimentos_tamanho,
+        municipio_interesse=municipio_de_interesse,
+        color_map=CORES_MUNICIPIOS,
     )

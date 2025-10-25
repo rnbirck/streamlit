@@ -117,18 +117,19 @@ def display_educacao(
 
     with st.expander(f"{titulo_expander}", expanded=False):
         titulo_centralizado(f"Indicadores de {titulo_expander}", 5)
-
-        indicador_selecionado = st.selectbox(
-            "Selecione um indicador:",
-            options=list(dicionario_indicadores.keys()),
-            key=f"{key_prefix}_selectbox_indicadores",
-        )
-
-        dependecia_selecionada = st.selectbox(
-            "Selecione uma dependência:",
-            options=list(dicionario_dependencia.keys()),
-            key=f"{key_prefix}_selectbox_dependencia",
-        )
+        col1, col2 = st.columns([0.6, 0.4])
+        with col1:
+            indicador_selecionado = st.selectbox(
+                "Selecione um indicador:",
+                options=list(dicionario_indicadores.keys()),
+                key=f"{key_prefix}_selectbox_indicadores",
+            )
+        with col2:
+            dependecia_selecionada = st.selectbox(
+                "Selecione uma dependência:",
+                options=list(dicionario_dependencia.keys()),
+                key=f"{key_prefix}_selectbox_dependencia",
+            )
 
         coluna_selecionada = dicionario_indicadores[indicador_selecionado]
 
@@ -144,6 +145,75 @@ def display_educacao(
         titulo_centralizado(
             f"{titulo_expander} - {indicador_selecionado} - {dependecia_selecionada}", 5
         )
+        fig = criar_grafico_barras(
+            df=df_graf,
+            titulo="",
+            label_y=f"{label_y}",
+            barmode="group",
+            height=500,
+            data_label_format=f"{data_label_format}",
+            hover_label_format=f"{hover_label_format}",
+            color_map=CORES_MUNICIPIOS,
+        )
+        st.plotly_chart(fig, use_container_width=False)
+
+
+def display_taxa_rendimento(
+    df_filtrado,
+    municipios_selecionados,
+    titulo_expander,
+    key_prefix,
+    dicionario_indicador_base,
+    dicionario_nivel_ensino,
+    dicionario_dependencia,
+    label_y,
+    data_label_format,
+    hover_label_format,
+):
+    """Função específica para Taxas de Rendimento com 3 seletores."""
+
+    with st.expander(f"{titulo_expander}", expanded=False):
+        titulo_centralizado(f"Indicadores de {titulo_expander}", 5)
+
+        col1, col2, col3 = st.columns([0.3, 0.4, 0.3])
+
+        with col1:
+            indicador_selecionado_label = st.selectbox(
+                "Selecione um indicador:",
+                options=list(dicionario_indicador_base.keys()),
+                key=f"{key_prefix}_selectbox_indicador",
+            )
+        with col2:
+            nivel_selecionado_label = st.selectbox(
+                "Selecione o nível de ensino:",
+                options=list(dicionario_nivel_ensino.keys()),
+                key=f"{key_prefix}_selectbox_nivel",
+            )
+        with col3:
+            dependencia_selecionada_label = st.selectbox(
+                "Selecione uma dependência:",
+                options=list(dicionario_dependencia.keys()),
+                key=f"{key_prefix}_selectbox_dependencia",
+            )
+
+        indicador_base = dicionario_indicador_base[indicador_selecionado_label]
+        nivel_base = dicionario_nivel_ensino[nivel_selecionado_label]
+        dependencia_valor = dicionario_dependencia[dependencia_selecionada_label]
+
+        coluna_selecionada = f"{indicador_base}_{nivel_base}"
+
+        df_graf = preparar_dados_grafico_educacao(
+            df_filtrado=df_filtrado,
+            coluna_selecionada=coluna_selecionada,
+            dependencia=dependencia_valor,
+            municipios_selecionados=municipios_selecionados,
+        )
+
+        titulo_centralizado(
+            f"{indicador_selecionado_label} - {nivel_selecionado_label} - {dependencia_selecionada_label}",
+            5,
+        )
+
         fig = criar_grafico_barras(
             df=df_graf,
             titulo="",
@@ -174,24 +244,25 @@ def display_ideb_mun(
             "O Índice de Desenvolvimento da Educação Básica (Ideb) reúne, em um só indicador, os resultados de dois conceitos igualmente importantes para a qualidade da educação: o fluxo escolar e as médias de desempenho nas avaliações. O Ideb é calculado a partir dos dados sobre aprovação escolar, obtidos no Censo Escolar, e das médias de desempenho no Sistema de Avaliação da Educação Básica (Saeb).",
             6,
         )
-
-        categoria_selecionada = st.selectbox(
-            "Selecione uma etapa de ensino:",
-            options=list(dicionario_categoria.keys()),
-            key=f"{key_prefix}_selectbox_categoria",
-        )
-
-        indicador_selecionado = st.selectbox(
-            "Selecione um indicador:",
-            options=list(dicionario_indicadores.keys()),
-            key=f"{key_prefix}_selectbox_indicadores",
-        )
-
-        dependencia_selecionada = st.selectbox(
-            "Selecione uma dependência:",
-            options=list(dicionario_dependencia.keys()),
-            key=f"{key_prefix}_selectbox_dependencia",
-        )
+        col1, col2, col3 = st.columns([0.4, 0.3, 0.3])
+        with col1:
+            categoria_selecionada = st.selectbox(
+                "Selecione uma etapa de ensino:",
+                options=list(dicionario_categoria.keys()),
+                key=f"{key_prefix}_selectbox_categoria",
+            )
+        with col2:
+            indicador_selecionado = st.selectbox(
+                "Selecione um indicador:",
+                options=list(dicionario_indicadores.keys()),
+                key=f"{key_prefix}_selectbox_indicadores",
+            )
+        with col3:
+            dependencia_selecionada = st.selectbox(
+                "Selecione uma dependência:",
+                options=list(dicionario_dependencia.keys()),
+                key=f"{key_prefix}_selectbox_dependencia",
+            )
 
         categoria = dicionario_categoria[categoria_selecionada]
 
@@ -242,27 +313,28 @@ def display_ideb_escolas(
         )
 
         anos_disponiveis = sorted(df_filtrado["ano"].unique().tolist(), reverse=True)
-
-        ANO_SELECIONADO = st.selectbox(
-            "Selecione o ano para a tabela:",
-            options=anos_disponiveis,
-            index=0,
-            key="hist_ano_escolas",
-        )
+        col1, col2, col3 = st.columns([0.2, 0.4, 0.4])
+        with col1:
+            ANO_SELECIONADO = st.selectbox(
+                "Selecione o ano para a tabela:",
+                options=anos_disponiveis,
+                index=0,
+                key="hist_ano_escolas",
+            )
 
         df_filtrado = df_filtrado[df_filtrado["ano"] == ANO_SELECIONADO]
-
-        categoria_selecionada = st.selectbox(
-            "Selecione uma etapa de ensino:",
-            options=list(dicionario_categoria.keys()),
-            key=f"{key_prefix}_selectbox_categoria",
-        )
-
-        dependencia_selecionada = st.selectbox(
-            "Selecione uma dependência:",
-            options=list(dicionario_dependencia.keys()),
-            key=f"{key_prefix}_selectbox_dependencia",
-        )
+        with col2:
+            categoria_selecionada = st.selectbox(
+                "Selecione uma etapa de ensino:",
+                options=list(dicionario_categoria.keys()),
+                key=f"{key_prefix}_selectbox_categoria",
+            )
+        with col3:
+            dependencia_selecionada = st.selectbox(
+                "Selecione uma dependência:",
+                options=list(dicionario_dependencia.keys()),
+                key=f"{key_prefix}_selectbox_dependencia",
+            )
 
         categoria = dicionario_categoria[categoria_selecionada]
 
@@ -357,23 +429,17 @@ def show_page_educacao(
         "EJA (Educação de Jovens e Adultos)": "turmas_eja",
     }
 
-    INDICADORES_RENDIMENTO = {
-        # --- Taxas de Aprovação ---
-        "Taxa de Aprovação - Ensino Fundamental": "taxa_aprovacao_fundamental",
-        "Taxa de Aprovação - Anos Iniciais do Ensino Fundamental": "taxa_aprovacao_fundamental_anos_iniciais",
-        "Taxa de Aprovação - Anos Finais do Ensino Fundamental": "taxa_aprovacao_fundamental_anos_finais",
-        # --- Taxas de Reprovação ---
-        "Taxa de Reprovação - Ensino Fundamental": "taxa_reprovacao_fundamental",
-        "Taxa de Reprovação - Anos Iniciais do Ensino Fundamental": "taxa_reprovacao_fundamental_anos_iniciais",
-        "Taxa de Reprovação - Anos Finais do Ensino Fundamental": "taxa_reprovacao_fundamental_anos_finais",
-        # --- Taxas de Abandono ---
-        "Taxa de Abandono - Ensino Fundamental": "taxa_abandono_fundamental",
-        "Taxa de Abandono - Anos Iniciais do Ensino Fundamental": "taxa_abandono_fundamental_anos_iniciais",
-        "Taxa de Abandono - Anos Finais do Ensino Fundamental": "taxa_abandono_fundamental_anos_finais",
-        # --- Taxas de Distorção Idade-Série ---
-        "Taxa de Distorção Idade-Série - Ensino Fundamental": "taxa_distorcao_fundamental",
-        "Taxa de Distorção Idade-Série - Anos Iniciais do Ensino Fundamental": "taxa_distorcao_fundamental_anos_iniciais",
-        "Taxa de Distorção Idade-Série - Anos Finais do Ensino Fundamental": "taxa_distorcao_fundamental_anos_finais",
+    INDICADOR_BASE_RENDIMENTO = {
+        "Taxa de Aprovação": "taxa_aprovacao",
+        "Taxa de Reprovação": "taxa_reprovacao",
+        "Taxa de Abandono": "taxa_abandono",
+        "Taxa de Distorção Idade-Série": "taxa_distorcao",
+    }
+
+    NIVEL_ENSINO_RENDIMENTO = {
+        "Ensino Fundamental": "fundamental",
+        "Anos Iniciais do Ens. Fundamental": "fundamental_anos_iniciais",
+        "Anos Finais do Ens. Fundamental": "fundamental_anos_finais",
     }
 
     INDICADOR_ESCOLAS = {"Número de Escolas": "qntd_escolas"}
@@ -434,14 +500,15 @@ def show_page_educacao(
         data_label_format=",.0f",
     )
 
-    display_educacao(
+    display_taxa_rendimento(
         df_filtrado=df_rendimento,
         titulo_expander="Taxas de Rendimento",
         municipios_selecionados=municipios_selecionados_global,
         dicionario_dependencia=DEPENDENCIA_RENDIMENTO,
-        dicionario_indicadores=INDICADORES_RENDIMENTO,
+        dicionario_indicador_base=INDICADOR_BASE_RENDIMENTO,  # Novo
+        dicionario_nivel_ensino=NIVEL_ENSINO_RENDIMENTO,  # Novo
         key_prefix="rendimento",
-        label_y="Taxa",
+        label_y="Taxa (%)",  # Label atualizado
         hover_label_format=",.1f",
         data_label_format=",.1f",
     )

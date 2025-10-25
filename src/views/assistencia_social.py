@@ -94,11 +94,14 @@ def display_assistencia(
 
     with st.expander(f"{titulo_expander}", expanded=False):
         titulo_centralizado(f"Indicadores do {titulo_expander}", 5)
-        indicador_selecionado = st.selectbox(
-            "Selecione um indicador:",
-            options=list(dicionario_indicadores.keys()),
-            key=f"{key_prefix}_selectbox",
-        )
+        col1, col2 = st.columns([0.6, 0.5])
+
+        with col1:
+            indicador_selecionado = st.selectbox(
+                "Selecione um indicador:",
+                options=list(dicionario_indicadores.keys()),
+                key=f"{key_prefix}_selectbox",
+            )
 
         coluna_selecionada = dicionario_indicadores[indicador_selecionado]
         df_graf = preparar_dados_graficos_assistencia_social(
@@ -107,8 +110,7 @@ def display_assistencia(
 
         anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
 
-        col1, col2 = st.columns(2)
-        with col1:
+        with col2:
             if not anos_disponiveis:
                 st.warning("Nenhum dado disponível para os filtros selecionados.")
             else:

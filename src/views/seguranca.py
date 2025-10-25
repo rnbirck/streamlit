@@ -88,21 +88,24 @@ def display_secao_seguranca(
     with st.expander(titulo_expander, expanded=False):
         # --- WIDGETS DE FILTRO ---
 
-        indicador_selecionado = st.selectbox(
-            "Selecione um indicador:",
-            options=list(dicionario_indicadores.keys()),
-            key=f"{key_prefix}_selectbox",
-        )
+        col1, col2 = st.columns([0.6, 0.4])
+
+        with col1:
+            indicador_selecionado = st.selectbox(
+                "Selecione um indicador:",
+                options=list(dicionario_indicadores.keys()),
+                key=f"{key_prefix}_selectbox",
+            )
         coluna_selecionada = dicionario_indicadores[indicador_selecionado]
 
         # --- BOTÕES PARA ALTERNAR VISUALIZAÇÃO ---
-        view_mode = st.radio(
-            "Visualizar por:",
-            options=["Número de Ocorrências", "Taxa por 10 mil hab."],
-            horizontal=True,
-            label_visibility="collapsed",
-            key=f"view_mode_{key_prefix}",
-        )
+        with col2:
+            view_mode = st.radio(
+                "Visualizar por:",
+                options=["Número de Ocorrências", "Taxa por 10 mil hab."],
+                horizontal=True,
+                key=f"view_mode_{key_prefix}",
+            )
 
         # --- PREPARAÇÃO DOS DADOS COM BASE NA ESCOLHA DO USUÁRIO ---
         is_taxa = view_mode == "Taxa por 10 mil hab."
@@ -202,8 +205,6 @@ def show_page_seguranca(df_seguranca, df_seguranca_taxa):
     # Dicionário de Indicadores Gerais
     INDICADORES_GERAIS = {
         "Homicídio Doloso": "homicidio_doloso",
-        "Vítimas de Homicídio Doloso": "total_vitimas_homicidio_doloso",
-        "Latrocínio": "latrocinio",
         "Furtos": "furtos",
         "Roubos": "roubos",
         "Furto de Veículo": "furto_veiculo",
