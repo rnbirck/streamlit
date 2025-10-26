@@ -33,10 +33,23 @@
 }
 
 /* Deixa a barra lateral mais compacta */
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 1.5rem;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+}
+
+/* Reduz o espaço vertical entre os elementos no corpo principal */
+[data-testid="stVerticalBlock"] > [style*="gap"] {
+    gap: 0.75rem; /* O padrão é 1rem, então isso compacta um pouco */
+}
+
+/* Deixa a barra lateral mais compacta */
 [data-testid="stSidebar"] > div:first-child {
-    padding-top: 0rem;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    padding-top: 2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 [data-testid="stSidebar"] .st-emotion-cache-1y4p8pa {

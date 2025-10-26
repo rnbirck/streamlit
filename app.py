@@ -323,10 +323,10 @@ def main():
             default_index=0,
             key="selected_page",
             styles={
-                "icon": {"font-size": "12px"},
+                "icon": {"font-size": "14px"},
                 "nav-link": {
-                    "font-size": "12px",
-                    "padding": "8px 12px",
+                    "font-size": "14px",
+                    "padding": "8px 15px",
                 },
                 "nav-link-selected": {"background-color": "#d90429"},
             },
