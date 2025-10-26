@@ -5,9 +5,9 @@ municipios_de_interesse = [
     "São Leopoldo",
     "Gravataí",
 ]
-anos_de_interesse = list(range(2021, 2026))
+anos_de_interesse = tuple(range(2021, 2026))
 
-anos_comex = list(range(min(anos_de_interesse) - 1, max(anos_de_interesse) + 1))
+anos_comex = tuple(range(min(anos_de_interesse) - 1, max(anos_de_interesse) + 1))
 
 CORES_MUNICIPIOS = {
     "São Leopoldo": "#4C82F7",  # Azul Google
