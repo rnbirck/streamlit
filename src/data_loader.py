@@ -4,18 +4,14 @@ import requests
 import io
 import os
 from supabase import create_client, Client
-# REMOVIDO: A importação do load_dotenv sai daqui
 
-# --- 1. CONFIGURAÇÃO DA CONEXÃO SUPABASE ---
-
-# As variáveis agora são carregadas pelo app.py ANTES desta importação
+# CONFIGURAÇÃO DA CONEXÃO SUPABASE ---
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# ID do PDF no Google Drive (mantido, pois não é uma tabela)
+# ID do PDF no Google Drive
 ID_PDF_INDICADORES_FINANCEIROS = "1oyJg_JH5hlVYmXFDwSuKH7p5lqiePefl"
 
-# **MODIFICADO: Renomeado para evitar colisão de namespace**
 supabase_client: Client = None
 
 # Validação das variáveis de ambiente
@@ -26,18 +22,16 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     )
 else:
     try:
-        # **MODIFICADO: Usando a nova variável 'supabase_client'**
         supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
         print("Conexão com Supabase estabelecida para o data_loader.")
     except Exception as e:
         print(f"Erro ao conectar ao Supabase no data_loader: {e}")
-        # O Streamlit mostrará um erro se a conexão falhar
         st.error(
             f"Falha ao conectar ao Supabase: {e}. Verifique as variáveis de ambiente SUPABASE_URL e SUPABASE_KEY."
         )
 
 
-# --- 2. FUNÇÕES AUXILIARES E CACHE ---
+# FUNÇÕES AUXILIARES E CACHE
 
 CACHE_TTL = 172800  # 48 horas
 
@@ -61,7 +55,7 @@ def carregar_pdf_indicadores_financeiros():
         return None
 
 
-# --- 3. FUNÇÕES DE CARREGAMENTO DE DADOS (SUPABASE) ---
+# --- FUNÇÕES DE CARREGAMENTO DE DADOS (SUPABASE) ---
 
 
 @st.cache_data(ttl=CACHE_TTL)

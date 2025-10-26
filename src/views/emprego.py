@@ -324,7 +324,7 @@ def display_emprego_municipios_expander(
                 titulo="",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
-                height=450,
+                height=400,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
                 color_map=CORES_MUNICIPIOS,
@@ -340,7 +340,7 @@ def display_emprego_municipios_expander(
                 titulo="",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
-                height=450,
+                height=400,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
                 color_map=CORES_MUNICIPIOS,
@@ -355,7 +355,7 @@ def display_emprego_municipios_expander(
                 titulo="",
                 label_y="Saldo de Admissões e Demissões",
                 barmode="group",
-                height=450,
+                height=400,
                 data_label_format=",.0f",
                 hover_label_format=",.0f",
                 color_map=CORES_MUNICIPIOS,
@@ -446,7 +446,7 @@ def preparar_dados_renda_grafico(df, coluna_agregacao, coluna_valor):
         index="ano",
         columns=coluna_agregacao,
         values=coluna_valor,
-        aggfunc="mean",  # Usar média pois os dados já estão agregados
+        aggfunc="mean",
         fill_value=0,
     ).sort_index()
     return df_pivot
@@ -614,7 +614,7 @@ def render_renda_grafico_tab(
 
     df_grafico = preparar_dados_renda_grafico(df, coluna_agregacao, coluna_valor)
 
-    fig = criar_grafico_barras(  # Supondo que você tenha a função criar_grafico_barras
+    fig = criar_grafico_barras(
         df=df_grafico,
         titulo="",
         label_y=titulo_grafico,
@@ -762,7 +762,7 @@ def display_renda(
                     hover_format=",.2f",
                 )
 
-        # Aba 3: Tabela por CNAE - Grupo (inalterada)
+        # Aba 3: Tabela por CNAE - Grupo
         with tabs[3]:
             render_renda_tabela_tab(
                 df=df_renda_cnae,
@@ -771,7 +771,7 @@ def display_renda(
                 municipio_interesse=municipio_interesse,
             )
 
-        # Aba 4: Tabela por CNAE - Subclasse (inalterada)
+        # Aba 4: Tabela por CNAE - Subclasse
         with tabs[4]:
             render_renda_tabela_tab(
                 df=df_renda_cnae,

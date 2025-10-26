@@ -260,14 +260,12 @@ def main():
     ]
 
     with st.sidebar:
-        with st.expander(
-            "Filtros Globais", expanded=True
-        ):  # expanded=True deixa aberto por padrão
+        with st.expander("Filtros Globais", expanded=True):
             cor_foco = CORES_MUNICIPIOS.get(municipio_de_interesse, "#888888")
 
             st.markdown(
                 f"""
-                <label style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Município Principal:</label>
+                <label style="font-size: 14px;">Município Principal:</label>
                 <div style="
                     background-color: {cor_foco}; 
                     color: white; 

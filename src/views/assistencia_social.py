@@ -134,7 +134,7 @@ def display_assistencia(
             titulo="",
             label_y=f"{label_y}",
             barmode="group",
-            height=500,
+            height=400,
             data_label_format=",.0f",
             color_map=CORES_MUNICIPIOS,
             hover_label_format=",.0f",

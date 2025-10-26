@@ -58,7 +58,7 @@ def display_pib_total_expander(
     Expander modificado para incluir um st.radio para métricas
     (Valor vs Taxa de Crescimento) quando disponível.
     """
-    with st.expander(titulo_expander, expanded=True):
+    with st.expander(titulo_expander, expanded=False):
         col1, col2 = st.columns([0.6, 0.4])
         with col1:
             indicador_selecionado = st.selectbox(
@@ -109,7 +109,7 @@ def display_pib_total_expander(
                 df=df_grafico,
                 titulo="",
                 label_y=label_y,
-                height=450,
+                height=400,
                 data_label_format=data_format,
                 hover_label_format=hover_format,
                 color_map=CORES_MUNICIPIOS,
@@ -120,7 +120,7 @@ def display_pib_total_expander(
                 df=df_grafico,
                 titulo="",
                 label_y=label_y,
-                height=450,
+                height=400,
                 data_label_format=data_format,
                 hover_label_format=hover_format,
                 color_map=CORES_MUNICIPIOS,
@@ -190,7 +190,7 @@ def display_pib_vab_expander(df_filtrado, titulo_expander, vab_map, key_prefix):
                 color="Setor",
                 barmode="stack",
                 orientation="h",
-                height=450,
+                height=400,
                 labels={"municipio": ""},
                 title="",
                 color_discrete_map={
@@ -252,7 +252,7 @@ def display_pib_vab_expander(df_filtrado, titulo_expander, vab_map, key_prefix):
                     df=df_grafico,
                     titulo="",
                     label_y=label_y,
-                    height=450,
+                    height=400,
                     data_label_format=data_format,
                     hover_label_format=hover_format,
                     color_map=CORES_MUNICIPIOS,
@@ -263,7 +263,7 @@ def display_pib_vab_expander(df_filtrado, titulo_expander, vab_map, key_prefix):
                     df=df_grafico,
                     titulo="",
                     label_y=label_y,
-                    height=450,
+                    height=400,
                     data_label_format=data_format,
                     hover_label_format=hover_format,
                     color_map=CORES_MUNICIPIOS,

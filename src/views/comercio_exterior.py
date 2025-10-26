@@ -247,7 +247,7 @@ def display_comex_municipios_expander(df_mes):
                 titulo="",
                 label_y="(Milhões de US$)",
                 barmode="group",
-                height=450,
+                height=400,
                 data_label_format=",.1f",
                 hover_label_format=",.2f",
                 color_map=CORES_MUNICIPIOS,
@@ -258,7 +258,7 @@ def display_comex_municipios_expander(df_mes):
                 titulo="",
                 label_y="Variação em relação ao mesmo mês do ano anterior (%)",
                 barmode="group",
-                height=450,
+                height=400,
                 data_label_format=",.1f",
                 hover_label_format=",.2f",
                 color_map=CORES_MUNICIPIOS,
@@ -299,7 +299,7 @@ def display_comex_municipios_expander(df_mes):
                 titulo="",
                 label_y="(Milhões de US$)",
                 barmode="group",
-                height=450,
+                height=400,
                 data_label_format=",.1f",
                 hover_label_format=",.2f",
                 color_map=CORES_MUNICIPIOS,
@@ -315,7 +315,7 @@ def display_comex_municipios_expander(df_mes):
                 titulo="",
                 label_y="(Milhões de US$)",
                 barmode="group",
-                height=450,
+                height=400,
                 data_label_format=",.1f",
                 hover_label_format=",.2f",
                 color_map=CORES_MUNICIPIOS,
@@ -385,7 +385,7 @@ def preparar_grafico_comex(df_filtrado_exibicao):
         titulo="",
         label_y="Valor Exportado (US$)",
         barmode="stack",
-        height=450,
+        height=400,
         data_label_format=",.0f",
         hover_label_format=",.0f",
         color_map=CORES_MUNICIPIOS,
@@ -491,11 +491,11 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
                 ]
                 .sum()
                 .sort_values(by="Valor Exportado no Mês (US$)", ascending=False)
-                .head(5)["País"]
+                .head(3)["País"]
                 .tolist()
             )
             paises_selecionados = st.multiselect(
-                "Filtrar por País:",
+                "Filtrar por País(es):",
                 options=paises_options,
                 default=paises_default,
                 key="filtro_pp_pais",

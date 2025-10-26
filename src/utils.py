@@ -163,7 +163,7 @@ def criar_grafico_barras(
     titulo,
     label_y,
     barmode="group",
-    height=500,
+    height=400,
     data_label_format=",.2f",
     hover_label_format=",.2f",
     color_map=None,
@@ -216,7 +216,7 @@ def criar_grafico_barras(
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=1,
+            y=1.1,
             xanchor="left",
             x=0,
             title="",

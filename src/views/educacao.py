@@ -150,7 +150,7 @@ def display_educacao(
             titulo="",
             label_y=f"{label_y}",
             barmode="group",
-            height=500,
+            height=400,
             data_label_format=f"{data_label_format}",
             hover_label_format=f"{hover_label_format}",
             color_map=CORES_MUNICIPIOS,
@@ -219,7 +219,7 @@ def display_taxa_rendimento(
             titulo="",
             label_y=f"{label_y}",
             barmode="group",
-            height=500,
+            height=400,
             data_label_format=f"{data_label_format}",
             hover_label_format=f"{hover_label_format}",
             color_map=CORES_MUNICIPIOS,
@@ -290,7 +290,7 @@ def display_ideb_mun(
             titulo="",
             label_y=f"{indicador_selecionado}",
             barmode="group",
-            height=500,
+            height=400,
             data_label_format=",.1f",
             hover_label_format=",.1f",
             color_map=CORES_MUNICIPIOS,
@@ -451,7 +451,7 @@ def show_page_educacao(
     }
 
     titulo_centralizado("Clique nos menus abaixo para explorar os dados", 5)
-
+    st.markdown("###### Indicadores do Censo Escolar")
     display_educacao(
         df_filtrado=df_matriculas,
         titulo_expander="Escolas",
@@ -499,6 +499,7 @@ def show_page_educacao(
         hover_label_format=",.0f",
         data_label_format=",.0f",
     )
+    st.markdown("###### Taxas de Rendimento Escolar")
 
     display_taxa_rendimento(
         df_filtrado=df_rendimento,
@@ -511,6 +512,9 @@ def show_page_educacao(
         label_y="Taxa (%)",  # Label atualizado
         hover_label_format=",.1f",
         data_label_format=",.1f",
+    )
+    st.markdown(
+        "###### Índice de Desenvolvimento da Educação Básica (IDEB) e Notas do SAEB"
     )
 
     display_ideb_mun(
