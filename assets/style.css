@@ -20,3 +20,36 @@
     font-size: 1.15rem !important; /* Seletor mais específico para o texto da aba */
 }
 
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+/* Reduz o espaço vertical entre os elementos no corpo principal */
+[data-testid="stVerticalBlock"] > [style*="gap"] {
+    gap: 0.10rem; /* O padrão é 1rem, então isso compacta um pouco */
+}
+
+/* Deixa a barra lateral mais compacta */
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: 0rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+[data-testid="stSidebar"] .st-emotion-cache-1y4p8pa {
+    font-size: 14px;
+}
+
+/* Alvo: O texto dentro da caixa do multiselect (placeholder e itens selecionados) */
+[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {
+    font-size: 13px; /* Um pouco menor para caber bem na "pílula" */
+    padding: 2px 6px; /* Ajusta o padding da "pílula" */
+}
+
+/* Alvo: O texto do placeholder "Choose an option" quando nada está selecionado */
+[data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] > div {
+    font-size: 14px;
+}

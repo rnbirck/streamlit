@@ -1,87 +1,87 @@
 # %%
-# ==============================================================================
-# BLOCO 1: IMPORTS STANDARD DO PYTHON
-# ==============================================================================
-import os
 
 # ==============================================================================
-# BLOCO 2: IMPORTS DE TERCEIROS (PIP)
+# BLOCO 1: IMPORTS DE TERCEIROS (PIP)
 # ==============================================================================
 import streamlit as st
 from dotenv import load_dotenv
 from streamlit_option_menu import option_menu
+from dotenv import load_dotenv  # noqa: F811
 
+load_dotenv()
 # ==============================================================================
-# BLOCO 3: IMPORTS DA APLICAÇÃO (SRC)
+# BLOCO 2: IMPORTS DA APLICAÇÃO (SRC)
 # ==============================================================================
-from src.views.home import show_page_home
-from src.views.emprego import show_page_emprego
-from src.views.comercio_exterior import show_page_comex
-from src.views.seguranca import show_page_seguranca
-from src.views.assistencia_social import show_page_assistencia_social
-from src.views.financas import show_page_financas
-from src.views.empresas import show_page_empresas_ativas
-from src.views.educacao import show_page_educacao
-from src.views.saude import show_page_saude
-from src.views.pib import show_page_pib
-from src.views.demografia import show_page_demografia
+from src.views.home import show_page_home  # noqa: E402
+from src.views.emprego import show_page_emprego  # noqa: E402
+from src.views.comercio_exterior import show_page_comex  # noqa: E402
+from src.views.seguranca import show_page_seguranca  # noqa: E402
+from src.views.assistencia_social import show_page_assistencia_social  # noqa: E402
+from src.views.financas import show_page_financas  # noqa: E402
+from src.views.empresas import show_page_empresas_ativas  # noqa: E402
+from src.views.educacao import show_page_educacao  # noqa: E402
+from src.views.saude import show_page_saude  # noqa: E402
+from src.views.pib import show_page_pib  # noqa: E402
+from src.views.demografia import show_page_demografia  # noqa: E402
 
-from src.utils import carregar_css
-from src.utils import manter_posicao_scroll
+# noqa: E402
+from src.utils import carregar_css  # noqa: E402
+from src.utils import manter_posicao_scroll  # noqa: E402
 
-from src.data_loader import (
-    carregar_dados_emprego_municipios,
-    carregar_dados_vinculos_municipios,
-    carregar_dados_comex_mensal,
-    carregar_dados_seguranca,
-    carregar_dados_CAD,
-    carregar_dados_bolsa_familia,
-    carregar_dados_financas,
-    carregar_dados_indicadores_financeiros,
-    carregar_pdf_indicadores_financeiros,
-    carregar_dados_cnpj_total,
-    carregar_dados_educacao_matriculas,
-    carregar_dados_educacao_ideb_municipio,
-    carregar_dados_pib_municipios,
-    carregar_dados_saude_mensal,
-    carregar_dados_populacao_densidade,
-    carregar_dados_populacao_sexo_idade,
-    carregar_dados_emprego_cnae,
-    carregar_dados_emprego_faixa_etaria,
-    carregar_dados_emprego_raca_cor,
-    carregar_dados_emprego_grau_instrucao,
-    carregar_dados_emprego_sexo,
-    carregar_dados_vinculos_cnae,
-    carregar_dados_vinculos_sexo,
-    carregar_dados_vinculos_faixa_etaria,
-    carregar_dados_vinculos_grau_instrucao,
-    carregar_dados_vinculos_raca_cor,
-    carregar_dados_renda_municipios,
-    carregar_dados_renda_cnae,
-    carregar_dados_renda_sexo,
-    carregar_dados_estabelecimentos_municipios,
-    carregar_dados_estabelecimentos_cnae,
-    carregar_dados_estabelecimentos_tamanho,
-    carregar_dados_comex_anual,
-    carregar_dados_comex_municipio,
-    carregar_dados_seguranca_taxa,
-    carregar_dados_cnpj_cnae,
-    carregar_dados_mei_total,
-    carregar_dados_mei_cnae,
-    carregar_dados_educacao_rendimento,
-    carregar_dados_educacao_ideb_escolas,
-    carregar_dados_saude_despesas,
-    carregar_dados_saude_leitos,
-    carregar_dados_saude_medicos,
-    carregar_dados_saude_vacinas,
-)
-from src.config import (
-    municipio_de_interesse,
-    municipios_de_interesse,
-    anos_de_interesse,
-    anos_comex,
-    CORES_MUNICIPIOS,
-)
+# noqa: E402
+from src.data_loader import (  # noqa: E402
+    carregar_dados_emprego_municipios,  # noqa: E402
+    carregar_dados_vinculos_municipios,  # noqa: E402
+    carregar_dados_comex_mensal,  # noqa: E402
+    carregar_dados_seguranca,  # noqa: E402
+    carregar_dados_CAD,  # noqa: E402
+    carregar_dados_bolsa_familia,  # noqa: E402
+    carregar_dados_financas,  # noqa: E402
+    carregar_dados_indicadores_financeiros,  # noqa: E402
+    carregar_pdf_indicadores_financeiros,  # noqa: E402
+    carregar_dados_cnpj_total,  # noqa: E402
+    carregar_dados_educacao_matriculas,  # noqa: E402
+    carregar_dados_educacao_ideb_municipio,  # noqa: E402
+    carregar_dados_pib_municipios,  # noqa: E402
+    carregar_dados_saude_mensal,  # noqa: E402
+    carregar_dados_populacao_densidade,  # noqa: E402
+    carregar_dados_populacao_sexo_idade,  # noqa: E402
+    carregar_dados_emprego_cnae,  # noqa: E402
+    carregar_dados_emprego_faixa_etaria,  # noqa: E402
+    carregar_dados_emprego_raca_cor,  # noqa: E402
+    carregar_dados_emprego_grau_instrucao,  # noqa: E402
+    carregar_dados_emprego_sexo,  # noqa: E402
+    carregar_dados_vinculos_cnae,  # noqa: E402
+    carregar_dados_vinculos_sexo,  # noqa: E402
+    carregar_dados_vinculos_faixa_etaria,  # noqa: E402
+    carregar_dados_vinculos_grau_instrucao,  # noqa: E402
+    carregar_dados_vinculos_raca_cor,  # noqa: E402
+    carregar_dados_renda_municipios,  # noqa: E402
+    carregar_dados_renda_cnae,  # noqa: E402
+    carregar_dados_renda_sexo,  # noqa: E402
+    carregar_dados_estabelecimentos_municipios,  # noqa: E402
+    carregar_dados_estabelecimentos_cnae,  # noqa: E402
+    carregar_dados_estabelecimentos_tamanho,  # noqa: E402
+    carregar_dados_comex_anual,  # noqa: E402
+    carregar_dados_comex_municipio,  # noqa: E402
+    carregar_dados_seguranca_taxa,  # noqa: E402
+    carregar_dados_cnpj_cnae,  # noqa: E402
+    carregar_dados_mei_total,  # noqa: E402
+    carregar_dados_mei_cnae,  # noqa: E402
+    carregar_dados_educacao_rendimento,  # noqa: E402
+    carregar_dados_educacao_ideb_escolas,  # noqa: E402
+    carregar_dados_saude_despesas,  # noqa: E402
+    carregar_dados_saude_leitos,  # noqa: E402
+    carregar_dados_saude_medicos,  # noqa: E402
+    carregar_dados_saude_vacinas,  # noqa: E402
+)  # noqa: E402
+from src.config import (  # noqa: E402
+    municipio_de_interesse,  # noqa: E402
+    municipios_de_interesse,  # noqa: E402
+    anos_de_interesse,  # noqa: E402
+    anos_comex,  # noqa: E402
+    CORES_MUNICIPIOS,  # noqa: E402
+)  # noqa: E402
 
 
 def main():
@@ -90,8 +90,6 @@ def main():
     # ==============================================================================
     # BLOCO DE CARREGAMENTO DAS VARIÁVEIS DE AMBIENTE
     # ==============================================================================
-    dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
-    load_dotenv(dotenv_path=dotenv_path)
 
     # ==============================================================================
     # CONFIGURAÇÃO DA PÁGINA
@@ -262,37 +260,37 @@ def main():
     ]
 
     with st.sidebar:
-        st.title("Filtros Globais")
+        with st.expander(
+            "Filtros Globais", expanded=True
+        ):  # expanded=True deixa aberto por padrão
+            cor_foco = CORES_MUNICIPIOS.get(municipio_de_interesse, "#888888")
 
-        cor_foco = CORES_MUNICIPIOS.get(municipio_de_interesse, "#888888")
+            st.markdown(
+                f"""
+                <label style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Município Principal:</label>
+                <div style="
+                    background-color: {cor_foco}; 
+                    color: white; 
+                    padding: 8px 12px; 
+                    border-radius: 8px; 
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                ">
+                    {municipio_de_interesse}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-        st.markdown(
-            f"""
-            <label style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Município Principal:</label>
-            <div style="
-                background-color: {cor_foco}; 
-                color: white; 
-                padding: 8px 12px; 
-                border-radius: 8px; 
-                font-weight: 600;
-                margin-bottom: 10px;
-            ">
-                {municipio_de_interesse}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            municipios_comparados = st.multiselect(
+                "Adicionar municípios para comparação:",
+                options=municipios_para_comparacao,
+                default=municipios_para_comparacao,
+            )
+            municipios_selecionados_global = [
+                municipio_de_interesse
+            ] + municipios_comparados
 
-        municipios_comparados = st.multiselect(
-            "Adicionar municípios para comparação:",
-            options=municipios_para_comparacao,
-            default=municipios_para_comparacao,
-        )
-        municipios_selecionados_global = [
-            municipio_de_interesse
-        ] + municipios_comparados
-
-        st.markdown("---")
         pagina_selecionada = option_menu(
             menu_title="Menu",
             options=[
@@ -324,6 +322,14 @@ def main():
             menu_icon="cast",
             default_index=0,
             key="selected_page",
+            styles={
+                "icon": {"font-size": "12px"},
+                "nav-link": {
+                    "font-size": "12px",
+                    "padding": "8px 12px",
+                },
+                "nav-link-selected": {"background-color": "#d90429"},
+            },
         )
 
     # ==============================================================================
