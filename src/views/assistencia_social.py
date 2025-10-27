@@ -37,27 +37,17 @@ def display_assistencia_kpi_cards(df_cad, df_bolsa, municipio_interesse):
             (df_bolsa_mun["ano"] == ult_ano_bolsa)
             & (df_bolsa_mun["mes"] == ult_mes_bolsa)
         ]["qtd_beneficiados"].sum()
-        valor_medio_bolsa = df_bolsa_mun[
-            (df_bolsa_mun["ano"] == ult_ano_bolsa)
-            & (df_bolsa_mun["mes"] == ult_mes_bolsa)
-        ]["beneficio_medio"].sum()
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         col1.metric(
-            label=f"Famílias inscritas no CAD Único em {MESES_DIC[ult_mes_cad]} de {ult_ano_cad}",
+            label=f"Famílias inscritas no CAD Único em {MESES_DIC[ult_mes_cad][:3]}/{str(ult_ano_cad)[-2:]}",
             value=f"{num_cad:,.0f}".replace(",", "."),
             delta=None,
             border=True,
         )
         col2.metric(
-            label=f"Beneficiários do Novo Bolsa Família em {MESES_DIC[ult_mes_bolsa]} de {ult_ano_bolsa}",
+            label=f"Beneficiários do Novo Bolsa Família em {MESES_DIC[ult_mes_bolsa][:3]}/{str(ult_ano_cad)[-2:]}",
             value=f"{num_bolsa:,.0f}".replace(",", "."),
-            delta=None,
-            border=True,
-        )
-        col3.metric(
-            label=f"Valor médio do Novo Bolsa Família em {MESES_DIC[ult_mes_bolsa]} de {ult_ano_bolsa}",
-            value=f"R$ {valor_medio_bolsa:,.0f}".replace(",", "."),
             delta=None,
             border=True,
         )

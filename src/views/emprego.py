@@ -417,12 +417,10 @@ def display_emprego_cnae_expander(df_cnae_foco):
                 )
                 st.plotly_chart(fig, width="stretch")
             else:
-                st.dataframe(
-                    df_selecionado.style.format("{:,.0f}").background_gradient(
-                        cmap="coolwarm_r"
-                    ),
-                    width="stretch",
-                )
+                df_selecionado = df_selecionado.style.format(
+                    lambda x: f"{x:,.0f}".replace(",", ".")
+                ).background_gradient(cmap="coolwarm_r")
+                st.dataframe(df_selecionado)
 
         with tab_setor:
             render_cnae_content("grupo_ibge", show_graph=True, titulo_categoria="Setor")
