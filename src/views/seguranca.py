@@ -112,7 +112,7 @@ def display_secao_seguranca(
             )
 
         # --- PREPARAÇÃO DOS DADOS COM BASE NA ESCOLHA DO USUÁRIO ---
-        is_taxa = view_mode == "Taxa por 10 mil hab."
+        is_taxa = view_mode == label_taxa
         df_ativo = df_seguranca_taxa if is_taxa else df_seguranca
         label_y_grafico = label_taxa if is_taxa else "Ocorrências"
         data_label_format = ",.1f" if is_taxa else ",.0f"
