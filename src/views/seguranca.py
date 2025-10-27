@@ -82,12 +82,16 @@ def preparar_dados_graficos_seguranca(df_filtrado, coluna_selecionada, is_taxa=F
 
 
 def display_secao_seguranca(
-    df_seguranca, df_seguranca_taxa, titulo_expander, dicionario_indicadores, key_prefix
+    df_seguranca,
+    df_seguranca_taxa,
+    titulo_expander,
+    dicionario_indicadores,
+    key_prefix,
+    label_taxa="Taxa por 10 mil hab.",
 ):
     """Função genérica para exibir uma seção de indicadores de segurança com opção de taxa."""
     with st.expander(titulo_expander, expanded=False):
         # --- WIDGETS DE FILTRO ---
-
         col1, col2 = st.columns([0.6, 0.4])
 
         with col1:
@@ -102,7 +106,7 @@ def display_secao_seguranca(
         with col2:
             view_mode = st.radio(
                 "Visualizar por:",
-                options=["Número de Ocorrências", "Taxa por 10 mil hab."],
+                options=["Número de Ocorrências", label_taxa],
                 horizontal=True,
                 key=f"view_mode_{key_prefix}",
             )
@@ -110,7 +114,7 @@ def display_secao_seguranca(
         # --- PREPARAÇÃO DOS DADOS COM BASE NA ESCOLHA DO USUÁRIO ---
         is_taxa = view_mode == "Taxa por 10 mil hab."
         df_ativo = df_seguranca_taxa if is_taxa else df_seguranca
-        label_y_grafico = "Taxa por 10 mil hab." if is_taxa else "Ocorrências"
+        label_y_grafico = label_taxa if is_taxa else "Ocorrências"
         data_label_format = ",.1f" if is_taxa else ",.0f"
         hover_label_format = ",.2f" if is_taxa else ",.0f"
 
@@ -185,7 +189,7 @@ def display_secao_seguranca(
                 st.plotly_chart(fig, use_container_width=True)
 
         with tab_anual:
-            titulo_centralizado("Total Anual de Ocorrências", 5)
+            titulo_centralizado(f"Total Anual - {indicador_selecionado}", 5)
             fig = criar_grafico_barras(
                 df=df_anual,
                 titulo="",
@@ -242,6 +246,7 @@ def show_page_seguranca(df_seguranca, df_seguranca_taxa):
         "Violência Contra a Mulher",
         INDICADORES_VIOLENCIA_MULHER,
         "mulher",
+        label_taxa="Taxa por 10 mil mulheres",
     )
     display_secao_seguranca(
         df_seguranca,

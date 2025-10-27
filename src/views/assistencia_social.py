@@ -5,7 +5,7 @@ import pandas as pd
 # IMPORTAÇÕES DE FUNÇÕES E DADOS
 # ==============================================================================
 
-from src.utils import MESES_DIC, criar_grafico_barras, titulo_centralizado
+from src.utils import MESES_DIC, criar_grafico_barras, titulo_centralizado, calcular_yoy
 
 from src.config import (
     municipio_de_interesse,
@@ -33,22 +33,41 @@ def display_assistencia_kpi_cards(df_cad, df_bolsa, municipio_interesse):
         num_cad = df_cad_mun[
             (df_cad_mun["ano"] == ult_ano_cad) & (df_cad_mun["mes"] == ult_mes_cad)
         ]["total_familias"].sum()
+
+        num_cad_yoy = calcular_yoy(
+            df=df_cad_mun,
+            ultimo_ano=ult_ano_cad,
+            ultimo_mes=ult_mes_cad,
+            coluna="total_familias",
+            round=1,
+        )
+
         num_bolsa = df_bolsa_mun[
             (df_bolsa_mun["ano"] == ult_ano_bolsa)
             & (df_bolsa_mun["mes"] == ult_mes_bolsa)
         ]["qtd_beneficiados"].sum()
 
+        num_bolsa_yoy = calcular_yoy(
+            df=df_bolsa_mun,
+            ultimo_ano=ult_ano_bolsa,
+            ultimo_mes=ult_mes_bolsa,
+            coluna="qtd_beneficiados",
+            round=1,
+        )
+
         col1, col2 = st.columns(2)
         col1.metric(
             label=f"Famílias inscritas no CAD Único em {MESES_DIC[ult_mes_cad][:3]}/{str(ult_ano_cad)[-2:]}",
             value=f"{num_cad:,.0f}".replace(",", "."),
-            delta=None,
+            delta=f"{num_cad_yoy}%".replace(".", ","),
+            help="Taxa de Variação percentual em relação ao mesmo mês do ano anterior",
             border=True,
         )
         col2.metric(
             label=f"Beneficiários do Novo Bolsa Família em {MESES_DIC[ult_mes_bolsa][:3]}/{str(ult_ano_cad)[-2:]}",
             value=f"{num_bolsa:,.0f}".replace(",", "."),
-            delta=None,
+            delta=f"{num_bolsa_yoy}%".replace(".", ","),
+            help="Taxa de Variação percentual em relação ao mesmo mês do ano anterior",
             border=True,
         )
 

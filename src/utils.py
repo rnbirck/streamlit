@@ -425,9 +425,9 @@ def criar_tabela_comex(df, colunas_agg, colunas_finais, anos_selecionados):
         + colunas_finais
         + [
             "Valor Exportado no Mês (US$)",
-            "Variação YoY no Mês (%)",
+            "Variação Mês (vs Ano Ant.) (%)",
             "Valor Acumulado no Ano (US$)",
-            "Variação YoY Acumulada (%)",
+            "Variação Acum. (vs Ano Ant.) (%)",
         ]
     )
 

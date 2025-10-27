@@ -257,7 +257,7 @@ def display_indicadores_financeiros(
             titulo="",
             label_y=f"{label_y}",
             barmode="group",
-            height=500,
+            height=400,
             data_label_format=f"{data_label_format}",
             hover_label_format=f"{hover_label_format}",
             color_map=CORES_MUNICIPIOS,

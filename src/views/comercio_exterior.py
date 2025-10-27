@@ -267,7 +267,7 @@ def display_comex_municipios_expander(df_mes):
             with col2:
                 view_mode = st.radio(
                     "Selecione o modo de Visualização:",
-                    options=["Valor (Milhões de US$)", "Variação YoY (%)"],
+                    options=["Valor (Milhões de US$)", "Variação Anual (%)"],
                     horizontal=True,
                     key="view_mode_comex_municipios_hist",
                 )
@@ -276,10 +276,10 @@ def display_comex_municipios_expander(df_mes):
                 titulo_centralizado(f"Exportações em {ANO_SELECIONADO}", 5)
                 st.plotly_chart(fig_hist, width="stretch")
 
-            elif view_mode == "Variação YoY (%)":
+            elif view_mode == "Variação Anual (%)":
                 if fig_hist_perc:
                     titulo_centralizado(
-                        f"Variação Percentual (YoY) das Exportações em {ANO_SELECIONADO}",
+                        f"Variação Percentual Anual das Exportações em {ANO_SELECIONADO}",
                         5,
                     )
 
@@ -416,8 +416,8 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
         format_dict = {
             "Valor Exportado no Mês (US$)": lambda x: f"{x:,.0f}".replace(",", "."),
             "Valor Acumulado no Ano (US$)": lambda x: f"{x:,.0f}".replace(",", "."),
-            "Variação YoY no Mês (%)": lambda x: f"{x:.1f}%".replace(".", ","),
-            "Variação YoY Acumulada (%)": lambda x: f"{x:.1f}%".replace(".", ","),
+            "Variação Mês (vs Ano Ant.) (%)": lambda x: f"{x:.1f}%".replace(".", ","),
+            "Variação Acum. (vs Ano Ant.) (%)": lambda x: f"{x:.1f}%".replace(".", ","),
         }
 
         with tab_pais:
@@ -444,7 +444,10 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
             st.dataframe(
                 df_comex_pais_exibir.style.map(
                     destacar_percentuais,
-                    subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
+                    subset=[
+                        "Variação Mês (vs Ano Ant.) (%)",
+                        "Variação Acum. (vs Ano Ant.) (%)",
+                    ],
                 ).format(format_dict),
                 hide_index=True,
                 width="stretch",
@@ -473,7 +476,10 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
             st.dataframe(
                 df_comex_produto_exibir.style.map(
                     destacar_percentuais,
-                    subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
+                    subset=[
+                        "Variação Mês (vs Ano Ant.) (%)",
+                        "Variação Acum. (vs Ano Ant.) (%)",
+                    ],
                 ).format(format_dict),
                 hide_index=True,
                 width="stretch",
@@ -530,7 +536,10 @@ def display_comex_produto_pais_expander(df, municipio_interesse):
 
             styled_df = df_pais_produto_exibir.style.map(
                 destacar_percentuais,
-                subset=["Variação YoY no Mês (%)", "Variação YoY Acumulada (%)"],
+                subset=[
+                    "Variação Mês (vs Ano Ant.) (%)",
+                    "Variação Acum. (vs Ano Ant.) (%)",
+                ],
             ).format(format_dict)
 
             fig_pp = preparar_grafico_comex(df_pais_produto_exibir)
