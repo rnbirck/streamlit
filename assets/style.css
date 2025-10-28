@@ -1,3 +1,43 @@
+/* --- TEMA CLARO (DEFAULT) --- */
+/* Define a cor base do texto para preto suave (em vez de cinza) */
+body {
+    color: #111; 
+}
+
+/* Garante que os rótulos (abas, métricas, selectbox, etc.) fiquem pretos */
+[data-testid="stMetricLabel"] p,
+[data-testid="stTabs"] button p,
+[data-testid="stSelectbox"] label,
+[data-testid="stMultiSelect"] label,
+[data-testid="stExpander"] summary {
+    color: #111 !important; 
+}
+
+/* Rótulos de gráficos (Plotly) no tema claro */
+.plot-container text {
+    fill: #111 !important;
+}
+
+/* --- TEMA ESCURO (OVERRIDE) --- */
+/* Define a cor base do texto para branco suave no tema escuro */
+.dark body {
+    color: #fafafa;
+}
+
+/* Garante que os rótulos fiquem brancos no tema escuro */
+.dark [data-testid="stMetricLabel"] p,
+.dark [data-testid="stTabs"] button p,
+.dark [data-testid="stSelectbox"] label,
+.dark [data-testid="stMultiSelect"] label,
+.dark [data-testid="stExpander"] summary {
+    color: #fafafa !important;
+}
+
+/* Rótulos de gráficos (Plotly) no tema escuro */
+.dark .plot-container text {
+    fill: #fafafa !important;
+}
+
 /* Centraliza o conteúdo (label e valor) de cada métrica */
 [data-testid="stMetric"] > div {
     display: flex;
