@@ -36,6 +36,7 @@ def display_assistencia_kpi_cards(df_cad, df_bolsa, municipio_interesse):
 
         num_cad_yoy = calcular_yoy(
             df=df_cad_mun,
+            municipio=municipio_de_interesse,
             ultimo_ano=ult_ano_cad,
             ultimo_mes=ult_mes_cad,
             coluna="total_familias",
@@ -49,6 +50,7 @@ def display_assistencia_kpi_cards(df_cad, df_bolsa, municipio_interesse):
 
         num_bolsa_yoy = calcular_yoy(
             df=df_bolsa_mun,
+            municipio=municipio_de_interesse,
             ultimo_ano=ult_ano_bolsa,
             ultimo_mes=ult_mes_bolsa,
             coluna="qtd_beneficiados",

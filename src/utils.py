@@ -141,23 +141,33 @@ def filtrar_municipio_ult_mes_ano(df, municipio):
 
 
 @st.cache_data
-def calcular_yoy(df, ultimo_mes, ultimo_ano, coluna, round):
-    df_mes_historico = df[df["mes"] == ultimo_mes].sort_values(by="ano")
+def calcular_yoy(df, municipio, ultimo_mes, ultimo_ano, coluna, round):
+    """
+    Calcula a variação ano-a-ano (YoY) para um indicador específico,
+    filtrando por município, mês e ano.
+    """
+    # Filtra o DF para o MUNICÍPIO e o MÊS de interesse
+    df_filtrado = df[
+        (df["municipio"] == municipio) & (df["mes"] == ultimo_mes)
+    ].sort_values(by="ano")
 
-    df_mes_historico[f"{coluna}_ano_anterior"] = df_mes_historico[f"{coluna}"].shift(1)
+    # Cria a coluna "ano_anterior" usando shift()
+    df_filtrado[f"{coluna}_ano_anterior"] = df_filtrado[f"{coluna}"].shift(1)
 
-    # 3. Filtra apenas a linha do último ano, que agora contém o valor do ano anterior
-    dados_recentes = df_mes_historico[df_mes_historico["ano"] == ultimo_ano]
+    # Filtra apenas a linha do último ano
+    dados_recentes = df_filtrado[df_filtrado["ano"] == ultimo_ano]
 
+    # Verifica se temos a linha do ult ano e se ela tem um valor
     if not dados_recentes.empty:
         valor_atual = dados_recentes[f"{coluna}"].iloc[0]
         valor_anterior = dados_recentes[f"{coluna}_ano_anterior"].iloc[0]
 
-        # 4. Calcula a variação percentual, tratando divisão por zero
+        # 4. Calcula a variação percentual
         if pd.notna(valor_anterior) and valor_anterior > 0:
             variacao = ((valor_atual / valor_anterior) - 1) * 100
+            return variacao.round(round)
 
-    return variacao.round(round)
+    return None
 
 
 def criar_grafico_barras(

@@ -32,6 +32,7 @@ def display_cnpj_kpi_cards(df_cnpj, df_mei, municipio_de_interesse):
     )["empresas_ativas"].sum()
     cnpj_ativos_yoy = calcular_yoy(
         df=df_cnpj,
+        municipio=municipio_de_interesse,
         ultimo_ano=ult_ano,
         ultimo_mes=ult_mes,
         coluna="empresas_ativas",
@@ -42,6 +43,7 @@ def display_cnpj_kpi_cards(df_cnpj, df_mei, municipio_de_interesse):
     ].sum()
     mei_ativos_yoy = calcular_yoy(
         df=df_mei,
+        municipio=municipio_de_interesse,
         ultimo_ano=ult_ano,
         ultimo_mes=ult_mes,
         coluna="empresas_ativas",
