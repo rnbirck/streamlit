@@ -57,7 +57,7 @@ def display_cnpj_kpi_cards(df_cnpj, df_mei, municipio_de_interesse):
         border=True,
     )
     col2.metric(
-        label=f"MEI / Simples Ativos em {MESES_DIC[ult_mes]} de {ult_ano}",
+        label=f"MEI Ativos em {MESES_DIC[ult_mes]} de {ult_ano}",
         value=f"{mei_ativos_ult_mes:,.0f}".replace(",", "."),
         delta=f"{mei_ativos_yoy}%".replace(".", ","),
         help="Taxa de Variação percentual em relação ao mesmo mês do ano anterior",
@@ -357,7 +357,7 @@ def show_page_empresas_ativas(
     display_empresas_ativas_expander(
         df=df_mei,
         df_cnae=df_mei_cnae,
-        titulo_expander="MEI / Simples Ativos",
+        titulo_expander="MEI Ativos",
         key_prefix="mei_ativos",
     )
     st.markdown("###### Dados disponibilizados pela RAIS - Atualização Anual")

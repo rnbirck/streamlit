@@ -54,3 +54,4 @@ toml==0.10.2
 tornado==6.5.2
 watchdog==6.0.0
 wheel==0.45.1
+openpyxl==3.1.5

@@ -2,6 +2,8 @@ import plotly.express as px
 import streamlit as st
 import pandas as pd
 import numpy as np
+import io
+
 
 # --- DICIONÁRIOS E CONSTANTES ---
 
@@ -83,7 +85,7 @@ def carregar_css(caminho_arquivo):
     """
     Lê um arquivo CSS e o injeta na aplicação Streamlit.
     """
-    with open(caminho_arquivo) as f:
+    with open(caminho_arquivo, encoding="utf-8") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
@@ -499,3 +501,25 @@ def preparar_dados_graficos_anuais(df_filtrado, coluna_agregacao, coluna_valores
         fill_value=0,
     ).sort_index()
     return df
+
+
+# ... (outras funções do seu utils.py) ...
+@st.cache_data
+def to_excel(df: pd.DataFrame) -> bytes:
+    """
+    Converte um DataFrame do Pandas para um arquivo Excel em memória (bytes).
+
+    Args:
+        df (pd.DataFrame): O DataFrame a ser convertido.
+
+    Returns:
+        bytes: Os dados do arquivo Excel em bytes.
+    """
+    output = io.BytesIO()
+
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Dados")
+
+    # Pega o valor dos bytes do buffer de memória
+    processed_data = output.getvalue()
+    return processed_data
