@@ -12,7 +12,6 @@ from src.utils import (
     formatador_pt_br,
     criar_formatador_final,
     preparar_dados_graficos_anuais,
-    to_excel,
 )
 
 from src.config import (

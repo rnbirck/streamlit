@@ -1,2 +1,6 @@
 [server]
 fileWatcherType = "poll"
+[theme]
+base = "light"
+[client]
+toolbarMode = "minimal"

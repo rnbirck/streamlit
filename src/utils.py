@@ -237,6 +237,7 @@ def criar_grafico_barras(
             "<extra></extra>"
         ),
     )
+
     return fig
 
 
@@ -323,6 +324,7 @@ def criar_grafico_linhas(
             "<extra></extra>"
         ),
     )
+
     return fig
 
 
