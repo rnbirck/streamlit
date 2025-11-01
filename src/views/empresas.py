@@ -68,10 +68,11 @@ def display_cnpj_kpi_cards(df_cnpj, df_mei, municipio_de_interesse):
 
 
 @st.cache_data
-def preparar_dados_grafico_empresas_ativas(df, df_cnae):
+def preparar_dados_grafico_empresas_ativas(df, df_cnae, df_cnae_saldo):
     df_graf_total = pd.DataFrame()
     df_graf_setor = pd.DataFrame()
     df_tab_cnae = pd.DataFrame()
+    df_tab_cnae_saldo = pd.DataFrame()
 
     df_graf_total = (
         df.assign(
@@ -133,13 +134,41 @@ def preparar_dados_grafico_empresas_ativas(df, df_cnae):
     df_tab_cnae.columns = novos_nomes_colunas
     df_tab_cnae.index.name = "CNAE - Grupo"
 
-    return df_graf_total, df_graf_setor, df_tab_cnae
+    df_tab_cnae_saldo = (
+        df_cnae_saldo.assign(
+            date=lambda x: pd.to_datetime(
+                x["ano"].astype(str) + "-" + x["mes"].astype(str).str.zfill(2) + "-01"
+            )
+        )
+        .pivot_table(
+            index="grupo",
+            columns="date",
+            values="saldo_empresas",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .sort_values(by=date_sort, ascending=False)
+    )
+
+    novos_nomes_colunas = [
+        f"{MESES_DIC[data.month][:3]}/{str(data.year)[-2:]}"
+        for data in df_tab_cnae_saldo.columns
+    ]
+
+    df_tab_cnae_saldo.columns = novos_nomes_colunas
+    df_tab_cnae_saldo.index.name = "CNAE - Grupo"
+
+    return df_graf_total, df_graf_setor, df_tab_cnae, df_tab_cnae_saldo
 
 
-def display_empresas_ativas_expander(df, df_cnae, titulo_expander, key_prefix):
+def display_empresas_ativas_expander(
+    df, df_cnae, df_cnae_saldo, titulo_expander, key_prefix
+):
     with st.expander(f"{titulo_expander}", expanded=False):
-        df_graf_total, df_graf_cnae, df_tab_cnae = (
-            preparar_dados_grafico_empresas_ativas(df=df, df_cnae=df_cnae)
+        df_graf_total, df_graf_cnae, df_tab_cnae, df_tab_cnae_saldo = (
+            preparar_dados_grafico_empresas_ativas(
+                df=df, df_cnae=df_cnae, df_cnae_saldo=df_cnae_saldo
+            )
         )
 
         anos_disponiveis = sorted(df["ano"].unique().tolist(), reverse=True)
@@ -203,22 +232,48 @@ def display_empresas_ativas_expander(df, df_cnae, titulo_expander, key_prefix):
             st.plotly_chart(fig_setor, width="stretch")
 
         with tab_cnae:
-            colunas_do_ano = [
-                col
-                for col in df_tab_cnae.columns
-                if col.endswith(f"/{str(ANO_SELECIONADO)[-2:]}")
-            ]
-            df_tab_cnae_filtrada = df_tab_cnae[colunas_do_ano]
-
-            titulo_centralizado(
-                f"{titulo_expander} por CNAE em {municipio_de_interesse} - {ANO_SELECIONADO}",
-                5,
+            view_mode = st.radio(
+                "Selecione a Análise:",
+                options=["Estoque", "Saldo"],
+                horizontal=True,
+                label_visibility="collapsed",
+                key=f"view_mode_cnae_{key_prefix}",
             )
+            if view_mode == "Estoque":
+                colunas_do_ano = [
+                    col
+                    for col in df_tab_cnae.columns
+                    if col.endswith(f"/{str(ANO_SELECIONADO)[-2:]}")
+                ]
+                df_tab_cnae_filtrada = df_tab_cnae[colunas_do_ano]
 
-            tab_cnae = df_tab_cnae_filtrada.style.format(
-                lambda x: f"{x:,.0f}".replace(",", ".")
-            ).background_gradient(cmap="GnBu")
-            st.dataframe(tab_cnae, width="stretch")
+                titulo_centralizado(
+                    f"Estoque de {titulo_expander} por CNAE em {municipio_de_interesse} - {ANO_SELECIONADO}",
+                    5,
+                )
+
+                tab_cnae = df_tab_cnae_filtrada.style.format(
+                    lambda x: f"{x:,.0f}".replace(",", ".")
+                ).background_gradient(cmap="GnBu")
+                st.dataframe(tab_cnae, width="stretch")
+
+            if view_mode == "Saldo":
+                colunas_do_ano = [
+                    col
+                    for col in df_tab_cnae_saldo.columns
+                    if col.endswith(f"/{str(ANO_SELECIONADO)[-2:]}")
+                ]
+                df_tab_cnae_saldo_filtrada = df_tab_cnae_saldo[colunas_do_ano]
+
+                titulo_centralizado(
+                    f"Saldo de {titulo_expander} por CNAE em {municipio_de_interesse} - {ANO_SELECIONADO}",
+                    5,
+                )
+
+                tab_cnae = df_tab_cnae_saldo_filtrada.style.format(
+                    lambda x: f"{x:,.0f}".replace(",", ".")
+                ).background_gradient(cmap="coolwarm_r", axis=0)
+                st.dataframe(tab_cnae, width="stretch")
 
 
 def render_estabelecimentos_grafico_tab(
@@ -338,8 +393,10 @@ def display_estabelecimentos(
 def show_page_empresas_ativas(
     df_cnpj,
     df_cnpj_cnae,
+    df_cnpj_cnae_saldo,
     df_mei,
     df_mei_cnae,
+    df_mei_cnae_saldo,
     municipio_de_interesse,
     df_estabelecimentos_mun,
     df_estabelecimentos_cnae,
@@ -353,12 +410,14 @@ def show_page_empresas_ativas(
     display_empresas_ativas_expander(
         df=df_cnpj,
         df_cnae=df_cnpj_cnae,
+        df_cnae_saldo=df_cnpj_cnae_saldo,
         titulo_expander="CNPJ Ativos",
         key_prefix="cnpj_ativos",
     )
     display_empresas_ativas_expander(
         df=df_mei,
         df_cnae=df_mei_cnae,
+        df_cnae_saldo=df_mei_cnae_saldo,
         titulo_expander="MEI Ativos",
         key_prefix="mei_ativos",
     )

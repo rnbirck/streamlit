@@ -23,6 +23,7 @@ from src.views.educacao import show_page_educacao  # noqa: E402
 from src.views.saude import show_page_saude  # noqa: E402
 from src.views.pib import show_page_pib  # noqa: E402
 from src.views.demografia import show_page_demografia  # noqa: E402
+from src.views.dados import show_page_dados  # noqa: E402
 
 # noqa: E402
 from src.utils import carregar_css  # noqa: E402
@@ -66,8 +67,10 @@ from src.data_loader import (  # noqa: E402
     carregar_dados_comex_municipio,  # noqa: E402
     carregar_dados_seguranca_taxa,  # noqa: E402
     carregar_dados_cnpj_cnae,  # noqa: E402
+    carregar_dados_cnpj_cnae_saldo,  # noqa: E402
     carregar_dados_mei_total,  # noqa: E402
     carregar_dados_mei_cnae,  # noqa: E402
+    carregar_dados_mei_cnae_saldo,  # noqa: E402
     carregar_dados_educacao_rendimento,  # noqa: E402
     carregar_dados_educacao_ideb_escolas,  # noqa: E402
     carregar_dados_saude_despesas,  # noqa: E402
@@ -200,10 +203,16 @@ def main():
         df_cnpj_cnae = carregar_dados_cnpj_cnae(
             municipio=municipio_de_interesse, anos=anos_de_interesse
         )
+        df_cnpj_cnae_saldo = carregar_dados_cnpj_cnae_saldo(
+            municipio=municipio_de_interesse, anos=anos_de_interesse
+        )
         df_mei_total = carregar_dados_mei_total(
             municipios=municipios_de_interesse, anos=anos_de_interesse
         )
         df_mei_cnae = carregar_dados_mei_cnae(
+            municipio=municipio_de_interesse, anos=anos_de_interesse
+        )
+        df_mei_cnae_saldo = carregar_dados_mei_cnae_saldo(
             municipio=municipio_de_interesse, anos=anos_de_interesse
         )
         df_estabelecimentos = carregar_dados_estabelecimentos_municipios(
@@ -303,6 +312,7 @@ def main():
                 "PIB",
                 "Demografia",
                 "Finanças",
+                "Dados",
             ],
             icons=[
                 "house-door-fill",
@@ -316,6 +326,7 @@ def main():
                 "graph-up",
                 "person-lines-fill",
                 "piggy-bank-fill",
+                "download",
             ],
             menu_icon="cast",
             default_index=0,
@@ -462,8 +473,10 @@ def main():
             show_page_empresas_ativas(
                 df_cnpj=df_cnpj_total_filtrado,
                 df_cnpj_cnae=df_cnpj_cnae,
+                df_cnpj_cnae_saldo=df_cnpj_cnae_saldo,
                 df_mei=df_mei_total_filtrado,
                 df_mei_cnae=df_mei_cnae,
+                df_mei_cnae_saldo=df_mei_cnae_saldo,
                 municipio_de_interesse=municipio_de_interesse,
                 df_estabelecimentos_cnae=df_estabelecimentos_cnae,
                 df_estabelecimentos_mun=df_estabelecimentos_filtrado,
@@ -518,6 +531,67 @@ def main():
 
         elif pagina_selecionada == "Finanças":
             show_page_financas(
+                df_financas=df_financas_filtrado,
+                df_indicadores_financeiros=df_indicadores_financeiros_filtrado,
+                pdf_indicadores=pdf_indicadores,
+            )
+
+        elif pagina_selecionada == "Dados":
+            show_page_dados(
+                # --- Emprego ---
+                df_caged=df_caged_filtrado,
+                df_caged_cnae=df_caged_cnae,
+                df_caged_faixa_etaria=df_caged_faixa_etaria,
+                df_caged_raca_cor=df_caged_raca_cor,
+                df_caged_grau_instrucao=df_caged_grau_instrucao,
+                df_caged_sexo=df_caged_sexo,
+                df_vinculos=df_vinculos_filtrado,
+                df_vinculos_cnae=df_vinculos_cnae,
+                df_vinculos_faixa_etaria=df_vinculos_faixa_etaria,
+                df_vinculos_grau_instrucao=df_vinculos_grau_instrucao,
+                df_vinculos_raca_cor=df_vinculos_raca_cor,
+                df_vinculos_sexo=df_vinculos_sexo,
+                df_renda_mun=df_renda_filtrado,
+                df_renda_sexo=df_renda_sexo,
+                df_renda_cnae=df_renda_cnae,
+                municipio_de_interesse=municipio_de_interesse,
+                # --- Empresas ---
+                df_cnpj_mun=df_cnpj_total_filtrado,
+                df_cnpj_cnae=df_cnpj_cnae,
+                df_cnpj_cnae_saldo=df_cnpj_cnae_saldo,
+                df_mei_mun=df_mei_total_filtrado,
+                df_mei_cnae=df_mei_cnae,
+                df_mei_cnae_saldo=df_mei_cnae_saldo,
+                df_estabelecimentos_mun=df_estabelecimentos_filtrado,
+                df_estabelecimentos_cnae=df_estabelecimentos_cnae,
+                df_estabelecimentos_tamanho=df_estabelecimentos_tamanho,
+                # --- Comércio Exterior ---
+                df_comex_anual_mun=df_comex_ano_filtrado,
+                df_comex_mensal_mun=df_comex_mensal_filtrado,
+                df_comex_raw_municipio_foco=df_comex_municipio,
+                # --- Segurança ---
+                df_seguranca_mun=df_seguranca_filtrado,
+                df_seguranca_taxa_mun=df_seguranca_taxa_filtrado,
+                # --- Assistência Social ---
+                df_cad=df_cad_filtrado,
+                df_bolsa=df_bolsa_familia_filtrado,
+                # --- Educação ---
+                df_educacao_matriculas=df_educacao_matriculas,
+                df_educacao_rendimento=df_educacao_rendimento,
+                df_educacao_ideb_municipio=df_educacao_ideb_municipio,
+                df_educacao_ideb_escolas=df_educacao_ideb_escolas,
+                # --- Saúde ---
+                df_saude_mensal=df_saude_mensal,
+                df_saude_vacinas=df_saude_vacinas,
+                df_saude_despesas=df_saude_despesas,
+                df_saude_leitos=df_saude_leitos,
+                df_saude_medicos=df_saude_medicos,
+                # --- PIB ---
+                df_pib_municipios=df_pib_municipios_filtrado,
+                # --- Demografia ---
+                df_populacao_densidade=df_populacao_densidade_filtrado,
+                df_populacao_sexo_idade=df_populacao_sexo_idade_filtrado,
+                # --- Finanças ---
                 df_financas=df_financas_filtrado,
                 df_indicadores_financeiros=df_indicadores_financeiros_filtrado,
                 pdf_indicadores=pdf_indicadores,

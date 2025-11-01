@@ -624,6 +624,56 @@ GROUP BY t2.municipio,
          t3.grupo_ibge
 """
 
+QUERY_CNPJ_CNAE_VARIACAO = """
+WITH cnae_unico AS (
+    SELECT 
+        LPAD(cod_grupo::VARCHAR, 3, '0') AS cod_grupo,
+        MIN(grupo) AS grupo,
+        MIN(grupo_ibge) AS grupo_ibge
+    FROM cnae
+    GROUP BY cod_grupo
+),
+dados_base AS (
+    SELECT 
+        t2.municipio,
+        t1.ano,
+        t1.mes,
+        t3.grupo,
+        t3.grupo_ibge,
+        SUM(t1.empresas_ativas) as empresas_ativas
+    FROM cnpj AS t1
+    JOIN municipio AS t2 on t1.id_municipio = t2.id_municipio
+    JOIN cnae_unico t3 ON t1.cod_grupo = LPAD(t3.cod_grupo::VARCHAR, 3, '0')
+    WHERE 
+        t2.municipio = :municipio 
+        AND CAST(t1.ano AS INT) IN :lista_anos
+    GROUP BY 
+        t2.municipio, t1.ano, t1.mes, t3.grupo, t3.grupo_ibge
+),
+dados_com_lag AS (
+    SELECT
+        *,
+        LAG(empresas_ativas, 1, 0) OVER (
+            PARTITION BY municipio, grupo, grupo_ibge 
+            ORDER BY ano, mes
+        ) as empresas_mes_anterior
+    FROM dados_base
+)
+SELECT
+    municipio,
+    ano,
+    mes,
+    grupo,
+    grupo_ibge,
+    empresas_ativas,
+    empresas_mes_anterior,
+    (empresas_ativas - empresas_mes_anterior) as saldo_empresas
+FROM dados_com_lag
+ORDER BY 
+    municipio, grupo, ano, mes;
+"""
+
+
 QUERY_MEI_TOTAL = """
 SELECT t2.municipio,
        t1.ano,
@@ -661,6 +711,55 @@ GROUP BY t2.municipio,
          t1.mes,
          t3.grupo,
          t3.grupo_ibge
+"""
+
+QUERY_MEI_CNAE_VARIACAO = """
+WITH cnae_unico AS (
+    SELECT 
+        LPAD(cod_grupo::VARCHAR, 3, '0') AS cod_grupo,
+        MIN(grupo) AS grupo,
+        MIN(grupo_ibge) AS grupo_ibge
+    FROM cnae
+    GROUP BY cod_grupo
+),
+dados_base AS (
+    SELECT 
+        t2.municipio,
+        t1.ano,
+        t1.mes,
+        t3.grupo,
+        t3.grupo_ibge,
+        SUM(t1.empresas_ativas) as empresas_ativas
+    FROM mei AS t1
+    JOIN municipio AS t2 on t1.id_municipio = t2.id_municipio
+    JOIN cnae_unico t3 ON t1.cod_grupo = LPAD(t3.cod_grupo::VARCHAR, 3, '0')
+    WHERE 
+        t2.municipio = :municipio 
+        AND CAST(t1.ano AS INT) IN :lista_anos
+    GROUP BY 
+        t2.municipio, t1.ano, t1.mes, t3.grupo, t3.grupo_ibge
+),
+dados_com_lag AS (
+    SELECT
+        *,
+        LAG(empresas_ativas, 1, 0) OVER (
+            PARTITION BY municipio, grupo, grupo_ibge 
+            ORDER BY ano, mes
+        ) as empresas_mes_anterior
+    FROM dados_base
+)
+SELECT
+    municipio,
+    ano,
+    mes,
+    grupo,
+    grupo_ibge,
+    empresas_ativas,
+    empresas_mes_anterior,
+    (empresas_ativas - empresas_mes_anterior) as saldo_empresas
+FROM dados_com_lag
+ORDER BY 
+    municipio, grupo, ano, mes;
 """
 
 QUERY_EDUCACAO_MATRICULAS = """

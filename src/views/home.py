@@ -271,6 +271,22 @@ def show_page_home(
             args=("Assistência Social",),
             key="btn_home_assistencia",
         )
+        st.markdown("---")
+
+        st.markdown(
+            """
+            #### 📥 Dados 
+            Página destinada ao download das bases utilizadas na construção do dashboard.
+            
+            *Frequência: Conforme atualização das fontes*
+            """
+        )
+        st.button(
+            "Explorar Dados ➔",
+            on_click=go_to_page,
+            args=("Dados",),
+            key="btn_home_dados",
+        )
 
     # --- COLUNA B ---
     # Ordem: Educação, Saúde, PIB, Demografia, Finanças

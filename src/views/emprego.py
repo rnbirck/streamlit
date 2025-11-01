@@ -418,7 +418,7 @@ def display_emprego_cnae_expander(df_cnae_foco):
             else:
                 df_selecionado = df_selecionado.style.format(
                     lambda x: f"{x:,.0f}".replace(",", ".")
-                ).background_gradient(cmap="coolwarm_r")
+                ).background_gradient(cmap="coolwarm_r", axis=0)
                 st.dataframe(df_selecionado)
 
         with tab_setor:

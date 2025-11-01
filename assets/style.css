@@ -1,15 +1,13 @@
 
-/* Força os rótulos de widgets, abas e expanders para preto */
+/* Força os rótulos de widgets, abas e expanders para preto/escuro */
 [data-testid="stMetricLabel"] p,
 [data-testid="stTabs"] button p,
 [data-testid="stSelectbox"] label,
 [data-testid="stMultiSelect"] label,
-[data-testid="stExpander"] summary,
-[data-testid="stDataFrameHeading"], 
-[data-testid="stDataFrameIndex"]   
-{
+[data-testid="stExpander"] summary {
     color: #111 !important;
 }
+
 /* Força os textos dos gráficos (eixos, legendas, títulos) para preto/escuro */
 .stPlotlyChart text {
     fill: #111 !important; /* 'fill' é usado para texto SVG (Plotly) */
