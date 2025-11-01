@@ -450,7 +450,7 @@ def show_page_dados(
 
         with col_sd_a:
             st.download_button(
-                label=f"📥 Indicadores Mensais de Saúde em {municipio_de_interesse}",
+                label="📥 Indicadores Mensais de Saúde",
                 data=to_excel(df_saude_mensal),
                 file_name=f"saude_indicadores_mensais_{municipio_de_interesse}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -471,14 +471,14 @@ def show_page_dados(
 
         with col_sd_c:
             st.download_button(
-                label=f"📥 Despesas com Saúde em {municipio_de_interesse}",
+                label="📥 Despesas com Saúde",
                 data=to_excel(df_saude_despesas),
                 file_name=f"saude_despesas_{municipio_de_interesse}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True,
             )
             st.download_button(
-                label=f"📥 Imunização (Vacinação) em {municipio_de_interesse}",
+                label="📥 Imunização (Vacinação)",
                 data=to_excel(df_saude_vacinas),
                 file_name=f"saude_vacinacao_{municipio_de_interesse}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -487,14 +487,14 @@ def show_page_dados(
 
         with col_sd_d:
             st.download_button(
-                label=f"📥 Leitos do SUS em {municipio_de_interesse}",
+                label="📥 Leitos do SUS",
                 data=to_excel(df_saude_leitos),
                 file_name=f"saude_leitos_{municipio_de_interesse}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True,
             )
             st.download_button(
-                label=f"📥 Médicos do SUS em {municipio_de_interesse}",
+                label="📥 Médicos do SUS",
                 data=to_excel(df_saude_medicos),
                 file_name=f"saude_medicos_{municipio_de_interesse}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
